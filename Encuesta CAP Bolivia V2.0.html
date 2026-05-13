@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d4a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Encuesta CAP">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Encuesta CAP – Malaria & Dengue Bolivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #0d4a2e;
+    --green-mid: #1a7a4a;
+    --green-light: #2db870;
+    --amber: #f59e0b;
+    --amber-light: #fbbf24;
+    --cream: #faf7f0;
+    --text-dark: #1a1a1a;
+    --text-mid: #4a5568;
+    --text-light: #718096;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --shadow: 0 4px 24px rgba(13,74,46,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --red-border: #fecaca;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Sora', sans-serif; background: var(--cream); color: var(--text-dark); }
+
+  #app-header {
+    background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%);
+    color: var(--white);
+    padding: 16px 20px 14px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 16px rgba(13,74,46,0.3);
+  }
+  #header-text h1 { font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.85; }
+  #header-text p { font-size: 11px; opacity: 0.65; font-family: 'Space Mono', monospace; margin-top: 2px; }
+  #progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 10px; }
+  #progress-bar { height: 4px; background: var(--amber-light); border-radius: 2px; transition: width 0.4s ease; }
+  #progress-label { font-size: 11px; font-family: 'Space Mono', monospace; opacity: 0.75; text-align: right; margin-top: 4px; }
+
+  #main { max-width: 600px; margin: 0 auto; padding: 20px 16px 100px; }
+  .section-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--green-light);
+    animation: fadeSlide 0.3s ease;
+  }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .section-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--green-deep);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .section-icon { font-size: 18px; }
+  .question-block { margin-bottom: 20px; }
+  .question-label { font-size: 14px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; line-height: 1.45; }
+  .question-code { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--green-mid); font-weight: 700; margin-right: 6px; white-space: nowrap; }
+  .hint { font-size: 11px; color: var(--text-light); margin-top: 3px; font-style: italic; }
+  input[type="text"], input[type="number"], textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-family: 'Sora', sans-serif;
+    font-size: 14px; background: var(--cream); color: var(--text-dark);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus { outline: none; border-color: var(--green-light); box-shadow: 0 0 0 3px rgba(45,184,112,0.15); }
+  input[type="number"] { max-width: 140px; }
+  .options-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .option-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 11px 14px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .option-item.selected { background: #e8f8ef; border-color: var(--green-mid); }
+  .option-item input[type="radio"], .option-item input[type="checkbox"] { width: 18px; height: 18px; min-width: 18px; cursor: pointer; accent-color: var(--green-mid); margin-top: 1px; }
+  .option-item.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+  .option-text { font-size: 14px; line-height: 1.4; }
+  .skip-note {
+    background: #fff8e1; border: 1px solid #fbbf24;
+    border-radius: var(--radius-sm); padding: 8px 12px;
+    font-size: 12px; color: #92400e; margin: 8px 0 12px 0;
+    display: flex; gap: 6px; align-items: flex-start;
+  }
+  .likert-wrap { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .likert-btn {
+    flex: 1; min-width: 56px; padding: 10px 4px; text-align: center;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--cream); cursor: pointer; font-size: 12px;
+    font-family: 'Sora', sans-serif; transition: all 0.2s;
+  }
+  .likert-btn.selected { background: var(--green-mid); border-color: var(--green-mid); color: white; font-weight: 600; }
+  #bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: transparent; padding: 0; display: flex; justify-content: center; z-index: 150; pointer-events: none; }
+  #bottom-nav-row { max-width: 600px; width: 100%; margin: 0 auto; padding: 0 16px 20px; pointer-events: auto; }
+  .btn-prev-fixed { background: var(--cream); color: var(--text-mid); border: 1.5px solid var(--border); padding: 14px 20px; border-radius: var(--radius); font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  #btn-prev-fixed { display: none; }
+  #tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--white);
+    border-top: 1px solid var(--border); display: flex; z-index: 200;
+  }
+  .tab-btn { flex: 1; padding: 12px 8px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; border: none; background: none; font-family: 'Sora', sans-serif; }
+  .tab-btn .tab-icon { font-size: 22px; }
+  .tab-btn .tab-label { font-size: 10px; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tab-btn.active .tab-label { color: var(--green-mid); }
+  .tab-nav { background: linear-gradient(135deg, var(--green-mid) 0%, var(--green-light) 100%); border-radius: var(--radius) var(--radius) 0 0; margin-bottom: -2px; }
+  .tab-nav .tab-label { color: white !important; font-weight: 700; }
+  .tab-nav .tab-icon { color: white; }
+  #consent-screen {
+    min-height: 100vh; display: flex; flex-direction: column;
+    background: linear-gradient(160deg, var(--green-deep) 0%, #1a5c38 60%, #2db870 100%);
+    padding: 40px 24px 60px;
+  }
+  .consent-logo { font-size: 60px; text-align: center; margin-bottom: 16px; }
+  .consent-title { color: white; font-size: 22px; font-weight: 700; text-align: center; line-height: 1.3; margin-bottom: 6px; }
+  .consent-subtitle { color: rgba(255,255,255,0.7); font-size: 13px; text-align: center; font-family: 'Space Mono', monospace; margin-bottom: 28px; }
+  .consent-box { background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 20px; color: rgba(255,255,255,0.9); font-size: 13px; line-height: 1.7; margin-bottom: 28px; }
+  .consent-actions { display: flex; flex-direction: column; gap: 12px; }
+  .btn-consent-accept { background: var(--amber); color: var(--green-deep); font-weight: 700; font-size: 16px; padding: 16px; border-radius: 14px; border: none; cursor: pointer; font-family: 'Sora', sans-serif; }
+  .btn-consent-reject { background: transparent; color: rgba(255,255,255,0.6); font-size: 14px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-family: 'Sora', sans-serif; }
+  #complete-screen { min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+  .complete-icon { font-size: 72px; margin-bottom: 20px; }
+  .complete-title { font-size: 26px; font-weight: 700; color: var(--green-deep); margin-bottom: 10px; }
+  .saved-list { background: var(--white); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: left; margin-bottom: 24px; }
+  #admin-screen { padding: 20px 16px 80px; }
+  .record-card { background: var(--white); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 3px solid var(--amber); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; font-family: 'Sora', sans-serif; cursor: pointer; border: none; font-weight: 600; }
+  .btn-sm-primary { background: var(--green-mid); color: white; }
+  .btn-sm-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); }
+  #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--green-deep); color: white; padding: 12px 24px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; white-space: nowrap; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+  .other-input { margin-top: 6px; margin-left: 30px; width: calc(100% - 30px); display: none; }
+  .other-input.visible { display: block; }
+  .geo-info { background: #e6f7ee; border-radius: var(--radius-sm); padding: 10px; margin-bottom: 15px; border-left: 3px solid var(--green-mid); }
+  .timer-info { background: #fef3c7; border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: #92400e; display: flex; align-items: center; gap: 8px; }
+  .timer-countdown { font-weight: 700; font-family: 'Space Mono', monospace; background: #92400e; color: white; padding: 2px 8px; border-radius: 20px; }
+
+  /* Validation styles */
+  .required-mark { color: var(--red); font-size: 12px; margin-left: 4px; }
+  .field-error { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.15) !important; }
+  .error-msg { color: var(--red); font-size: 11px; margin-top: 4px; font-weight: 600; }
+  .validation-summary {
+    background: var(--red-light); border: 1px solid var(--red-border);
+    border-radius: var(--radius-sm); padding: 12px 16px;
+    margin-bottom: 16px; font-size: 13px; color: var(--red);
+    font-weight: 600;
+  }
+  .question-block.has-error .question-label { color: var(--red); }
+  .option-item.error-outline { border-color: var(--red) !important; }
+  .sent-indicator { font-size: 11px; color: #16a34a; margin-left: 12px; font-weight: normal; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="consent-screen">
+  <div class="consent-logo">🦟</div>
+  <h1 class="consent-title">Encuesta de conocimientos, actitudes y prácticas (CAP) sobre el combate a la malaria y el dengue en comunidades en un contexto de cambio climático</h1>
+  <p class="consent-subtitle">World Vision / KOICA · Bolivia</p>
+  <div class="consent-box">
+    <strong>Consentimiento informado</strong><br><br>
+    World Vision y la Agencia de Cooperación Internacional de Corea (Koica) está realizando una encuesta para recopilar información que ayude a mejorar la atención relacionada con la malaria y el dengue en su comunidad, en un contexto de cambio climático.<br><br>
+    Su participación es completamente voluntaria. Toda la información que brinde se mantendrá confidencial, y ni su nombre ni los de sus familiares se utilizarán en ningún informe publicado a partir de esta encuesta. Agradecemos su tiempo y contribución para mejorar las estrategias implementadas por las autoridades de salud para prevenir enfermedades y muertes por malaria, dengue u otras enfermedades en este contexto de variabilidad y cambio climático.<br><br>
+    Luego, de haber leído el consentimiento informado, ¿desea participar en la encuesta?
+  </div>
+  <div class="consent-actions">
+    <button class="btn-consent-accept" onclick="acceptConsent()">✔ Acepto</button>
+    <button class="btn-consent-reject" onclick="rejectConsent()">X No acepto</button>
+  </div>
+</div>
+
+<div id="main-app" class="hidden">
+  <div id="app-header"><div><div style="font-size:28px">🦟</div></div><div id="header-text" style="flex:1"><h1>Encuesta CAP – Bolivia</h1><p id="section-indicator">Sección 0</p><div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div><div id="progress-label">0%</div></div></div>
+  <div id="main"></div>
+  <div id="bottom-nav"><div id="bottom-nav-row"><button class="btn-prev-fixed" id="btn-prev-fixed" onclick="prevSection()">← Atrás</button></div></div>
+</div>
+
+<div id="complete-screen" class="hidden"><div class="complete-icon">✅</div><h2 class="complete-title">¡Encuesta completada!</h2><p class="complete-sub">Los datos han sido guardados.</p><button style="width:100%;max-width:360px;padding:15px" onclick="newSurvey()">➕ Nueva encuesta</button><br><br><button style="width:100%;max-width:360px;padding:15px" onclick="showAdmin()">📋 Ver registros</button></div>
+<div id="admin-screen" class="hidden"><div class="admin-header"><h2>📋 Registros guardados</h2></div><div style="display:flex;gap:8px;margin-bottom:16px"><button style="flex:1;padding:12px" onclick="exportAllCSV()">⬇️ Exportar todo (CSV)</button><button id="btn-send-all" style="flex:1;padding:12px;background:#1a7a4a;color:white" onclick="sendAllRecords()">📤 Enviar todo</button><button style="flex:1;padding:12px" onclick="clearAll()">🗑️ Borrar todo</button></div><div id="records-list"></div></div>
+
+<div id="tab-bar" style="display:none">
+  <button class="tab-btn tab-nav" id="tab-prev" onclick="prevSection()"><span class="tab-icon">◀</span><span class="tab-label">Atrás</span></button>
+  <button class="tab-btn tab-nav" id="tab-next" onclick="nextSection()"><span class="tab-icon">▶</span><span class="tab-label">Siguiente</span></button>
+  <button class="tab-btn active" id="tab-survey" onclick="switchTab('survey')"><span class="tab-icon">📝</span><span class="tab-label">Encuesta</span></button>
+  <button class="tab-btn" id="tab-records" onclick="switchTab('records')"><span class="tab-icon">📋</span><span class="tab-label">Registros</span></button>
+</div>
+
+<script>
+let currentSection = 0, answers = {}, editingId = null;
+const TOTAL_SECTIONS = 11;
+const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
+
+// Variables para el timer de I1
+let i1TimerInterval = null;
+let i1TimeLeft = 10;
+let i1Locked = false;
+let i1AnswerSelected = false;
+
+// --- Nuevas funciones para enviar a Google Sheets (con control de concurrencia) ---
+// Configuración: REEMPLAZAR con tu URL de Google Apps Script Web App
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWH5wzNdnhXBDGKebfFohvJKaKiM6G02uHGjA9V_0zBT9iWnUxnia9DvlCcDSaMeIC/exec"; // <--- CAMBIAR POR URL REAL
+
+async function sendRecordToSheet(record) {
+    try {
+        let cleaned = cleanExportRecord(record);
+        let processed = processRadioOtherAnswers(cleaned);
+        processed = processMultipleChoiceAnswers(processed);
+        if (!processed.timestamp) processed.timestamp = getLocalTimestamp();
+        
+        const payload = {
+            accion: "GUARDAR_REGISTROS",
+            registros: [processed]   // <-- envuelve en array con la accion correcta
+        };
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)   // <-- manda el payload correcto
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error enviando:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Enviar todos los registros no enviados
+async function sendAllRecords() {
+    let records = getRecords();
+    let unsent = records.filter(r => !r._sent);
+    if (unsent.length === 0) {
+        showToast("📭 No hay registros pendientes por enviar.");
+        return;
+    }
+    if (!navigator.onLine) {
+        showToast("⚠️ No hay conexión a internet. Conéctate y vuelve a intentar.");
+        return;
+    }
+    
+    showToast(`Enviando ${unsent.length} registro(s)...`);
+    let successCount = 0;
+    for (let rec of unsent) {
+        let result = await sendRecordToSheet(rec);
+        if (result.success) {
+            rec._sent = true;
+            rec._sentDate = getLocalTimestamp();
+            successCount++;
+        } else {
+            console.warn("Fallo al enviar:", rec.id);
+        }
+    }
+    // Guardar cambios (actualizar estado _sent)
+    let allRecords = getRecords();
+    for (let i = 0; i < allRecords.length; i++) {
+        let updated = records.find(r => r.id === allRecords[i].id);
+        if (updated) allRecords[i] = updated;
+    }
+    localStorage.setItem('cap_records', JSON.stringify(allRecords));
+    renderRecords(); // refrescar vista
+    showToast(`✅ Enviados ${successCount} de ${unsent.length} registros.`);
+}
+
+// MODIFICADO: Cada vez que se acepta el consentimiento, se solicita ubicación
+function acceptConsent() {
+    // Redirigir al navegador nativo si se abre desde WhatsApp WebView
+    var ua = navigator.userAgent || '';
+    var isWhatsApp = /whatsapp/i.test(ua);
+    var isAndroidWebView = /android/i.test(ua) && !/chrome/i.test(ua);
+    var isIOSWebView = /iphone|ipad|ipod/i.test(ua) && /applewebkit/i.test(ua) && !/safari/i.test(ua);
+    if (isWhatsApp || isAndroidWebView || isIOSWebView) {
+        var currentURL = location.href;
+        if (/android/i.test(ua)) {
+            // Android: fuerza apertura en Chrome
+            location.href = 'intent://' + currentURL.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+        } else {
+            // iOS: redirigir fuerza salida del WebView a Safari
+            location.href = currentURL;
+        }
+        return; // detiene la ejecución dentro del WebView
+    }
+    document.getElementById('consent-screen').classList.add('hidden'); 
+    document.getElementById('main-app').classList.remove('hidden'); 
+    document.getElementById('tab-bar').style.display = 'flex'; 
+    answers = { timestamp: getLocalTimestamp(), consent: 'Acepto' }; 
+    delete answers['ubicacion_lat'];
+    delete answers['ubicacion_lng'];
+    delete answers['ubicacion_precision'];
+    delete answers['ubicacion_direccion'];
+    delete answers['ubicacion_error'];
+    obtenerUbicacion();
+    renderSection(); 
+}
+
+function rejectConsent() { showToast('Encuesta rechazada – avanza a la siguiente vivienda según el salto (k=5 casas)'); }
+function prevSection() { 
+    if(currentSection > 0){ 
+        currentSection--; 
+        renderSection(); 
+        scrollToTop(); 
+    } 
+}
+function nextSection() {
+    if (currentSection === 1) {
+        const a1Value = answers['A1'];
+        if (a1Value !== undefined && a1Value !== '' && parseInt(a1Value) <= 1) {
+            showToast('❌ Tiempo de residencia ≤ 1 año. Encuesta finalizada según protocolo.');
+            returnToConsent();
+            return;
+        }
+    }
+    
+    // Verificar si estamos en la sección I y el timer aún no ha terminado
+     if (currentSection === 8 && i1AnswerSelected && !i1Locked) {
+        // Verificar si hay respuestas en ambos grupos (lo cual no debería pasar por la lógica de selectI1)
+        if (answers['I1_1'] && answers['I1_2']) {
+            showToast('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
+            return;
+        }
+        showToast('⏰ Por favor espera ' + i1TimeLeft + ' segundos para confirmar tu respuesta antes de continuar');
+        return;
+    }
+    
+    if (!validateSection()) return;
+    
+    if (currentSection < TOTAL_SECTIONS - 1) {
+        currentSection++;
+        renderSection();
+        scrollToTop();
+    } else {
+        finishSurvey();
+    }
+}
+function returnToConsent() {
+    try {
+        const partialAnswers = { ...answers };
+        partialAnswers.timestamp = getLocalTimestamp();
+        partialAnswers.id = Date.now().toString();
+        partialAnswers.encuesta_finalizada_temprano = true;
+        partialAnswers.razon_finalizacion = 'Tiempo de residencia ≤ 1 año (A1)';
+        
+        let records = getRecords();
+        records.push(partialAnswers);
+        localStorage.setItem('cap_records', JSON.stringify(records));
+    } catch(e) {
+        console.log('Error guardando respuesta parcial:', e);
+    }
+    
+    answers = {};
+    currentSection = 0;
+    editingId = null;
+    resetI1TimerGlobal();
+    
+    const consentScreen = document.getElementById('consent-screen');
+    const mainApp = document.getElementById('main-app');
+    const completeScreen = document.getElementById('complete-screen');
+    const adminScreen = document.getElementById('admin-screen');
+    const tabBar = document.getElementById('tab-bar');
+    
+    if (mainApp) mainApp.classList.add('hidden');
+    if (completeScreen) completeScreen.classList.add('hidden');
+    if (adminScreen) adminScreen.classList.add('hidden');
+    if (tabBar) tabBar.style.display = 'none';
+    
+    if (consentScreen) consentScreen.classList.remove('hidden');
+    
+    const existingMsg = document.querySelector('.early-exit-message');
+    if (existingMsg) existingMsg.remove();
+    
+    const consentBox = document.querySelector('.consent-box');
+    if (consentBox && !document.querySelector('.early-exit-message')) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'early-exit-message';
+        msgDiv.style.cssText = 'background: rgba(220,38,38,0.2); border-left: 4px solid #dc2626; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 13px;';
+        msgDiv.innerHTML = '⚠️ <strong>Importante:</strong> La encuesta anterior finalizó porque el tiempo de residencia era ≤ 1 año. Por favor, avance a la siguiente vivienda según el protocolo (salto de k=5 casas).';
+        consentBox.appendChild(msgDiv);
+    }
+    
+    showToast('Volviendo a pantalla de consentimiento...');
+}
+function scrollToTop() { window.scrollTo({top:0,behavior:'smooth'}); }
+function updateProgress() { let pct=Math.round((currentSection/(TOTAL_SECTIONS-1))*100); document.getElementById('progress-bar').style.width=pct+'%'; document.getElementById('progress-label').textContent=pct+'%'; document.getElementById('section-indicator').textContent=SECTION_NAMES[currentSection]; document.getElementById('btn-prev-fixed').style.display=currentSection===0?'none':'flex'; }
+
+function setAnswer(id,val) { 
+    answers[id]=val; 
+}
+
+// Función para manejar la selección de I1 con timer
+function selectI1(id, val, el) {
+    if (i1Locked) {
+        showToast('⏰ El tiempo para cambiar de opción ha finalizado');
+        return;
+    }
+    
+    if (answers[id] === val) {
+        return;
+    }
+    
+    answers[id] = val;
+    
+    if (id === 'I1_1') {
+        answers['I1_2'] = undefined;
+        const i1_2Block = document.querySelector('[data-qid="I1_2"]');
+        if (i1_2Block) {
+            i1_2Block.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+                const radio = item.querySelector('input');
+                if (radio) radio.checked = false;
+            });
+        }
+    } else if (id === 'I1_2') {
+        answers['I1_1'] = undefined;
+        const i1_1Block = document.querySelector('[data-qid="I1_1"]');
+        if (i1_1Block) {
+            i1_1Block.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+                const radio = item.querySelector('input');
+                if (radio) radio.checked = false;
+            });
+        }
+    }
+    
+    if (el.closest('.options-list')) {
+        el.closest('.options-list').querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
+    }
+    el.classList.add('selected');
+    const radio = el.querySelector('input');
+    if (radio) radio.checked = true;
+    
+    if (i1AnswerSelected) {
+        resetI1Timer();
+    } else {
+        i1AnswerSelected = true;
+        startI1Timer();
+    }
+}
+
+function startI1Timer() {
+    if (i1TimerInterval) {
+        clearInterval(i1TimerInterval);
+    }
+    
+    i1TimeLeft = 10;
+    updateTimerDisplay();
+    
+    i1TimerInterval = setInterval(() => {
+        if (i1TimeLeft > 0) {
+            i1TimeLeft--;
+            updateTimerDisplay();
+            
+            if (i1TimeLeft === 0) {
+                clearInterval(i1TimerInterval);
+                i1TimerInterval = null;
+                i1Locked = true;
+                lockI1Options();
+                showToast('✅ Respuesta confirmada. Ya no puedes cambiarla.');
+            }
+        }
+    }, 1000);
+}
+
+function resetI1Timer() {
+    if (i1Locked) return;
+    
+    if (i1TimerInterval) {
+        clearInterval(i1TimerInterval);
+        i1TimerInterval = null;
+    }
+    
+    i1TimeLeft = 10;
+    updateTimerDisplay();
+    
+    i1TimerInterval = setInterval(() => {
+        if (i1TimeLeft > 0) {
+            i1TimeLeft--;
+            updateTimerDisplay();
+            
+            if (i1TimeLeft === 0) {
+                clearInterval(i1TimerInterval);
+                i1TimerInterval = null;
+                i1Locked = true;
+                lockI1Options();
+                showToast('✅ Respuesta confirmada. Ya no puedes cambiarla.');
+            }
+        }
+    }, 1000);
+}
+
+function resetI1TimerGlobal() {
+    if (i1TimerInterval) {
+        clearInterval(i1TimerInterval);
+        i1TimerInterval = null;
+    }
+    i1Locked = false;
+    i1AnswerSelected = false;
+    i1TimeLeft = 10;
+}
+
+function updateTimerDisplay() {
+    const timerElement = document.getElementById('i1-timer-display');
+    if (timerElement) {
+        timerElement.textContent = i1Locked ? 'Confirmado' : i1TimeLeft + ' segundos';
+    }
+}
+
+function lockI1Options() {
+    const i1_1Block = document.querySelector('[data-qid="I1_1"]');
+    const i1_2Block = document.querySelector('[data-qid="I1_2"]');
+    
+    const selectedA = answers['I1_1'];
+    const selectedB = answers['I1_2'];
+    const selectedGroup = selectedA ? 'A' : (selectedB ? 'B' : null);
+    
+    if (i1_1Block) {
+        const options = i1_1Block.querySelectorAll('.option-item');
+        options.forEach(opt => {
+            opt.classList.add('disabled');
+            const optText = opt.querySelector('.option-text');
+            if (selectedGroup === 'B' || (selectedGroup === 'A' && optText && optText.textContent !== selectedA)) {
+                opt.style.display = 'none';
+            }
+        });
+    }
+    
+    if (i1_2Block) {
+        const options = i1_2Block.querySelectorAll('.option-item');
+        options.forEach(opt => {
+            opt.classList.add('disabled');
+            const optText = opt.querySelector('.option-text');
+            if (selectedGroup === 'A' || (selectedGroup === 'B' && optText && optText.textContent !== selectedB)) {
+                opt.style.display = 'none';
+            }
+        });
+    }
+    
+    if (selectedGroup === 'A') {
+        answers['I1_2'] = undefined;
+    } else if (selectedGroup === 'B') {
+        answers['I1_1'] = undefined;
+    }
+}
+
+function selectRadio(id, val, el) {
+    if (id === 'I1_1' || id === 'I1_2') {
+        selectI1(id, val, el);
+        renderSection(true);
+        return;
+    }
+    
+    const previousValue = answers[id];
+    answers[id] = val;
+    
+    if (el.closest('.options-list')) {
+        el.closest('.options-list').querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
+    }
+    el.classList.add('selected');
+    
+    const otherInput = document.getElementById(`other_input_${id}`);
+    if (otherInput) {
+        if (val === 'Otro') {
+            otherInput.classList.add('visible');
+        } else {
+            otherInput.classList.remove('visible');
+            const otherFieldId = `${id}_otro`;
+            answers[otherFieldId] = '';
+            otherInput.value = '';
+        }
+    }
+    
+    const conditionalParents = ['A3', 'A8', 'B4', 'B6', 'B7', 'B13_1_1', 'B13_2_1', 'B13_3_1', 
+                            'C3', 'M3', 'F5', 'F7_1', 'F7_2', 'F17', 'H1', 'H5', 'H14',
+                            'H6_1', 'H7_1', 'H8_1', 'H9_1', 'H10_1', 'H11_1', 'H12_1', 'H13_1',
+                            'H15_1', 'H16_1', 'H17_1', 'H18_1', 'H19_1', 'H20_1', 'I1_1', 'I1_2', 'I3',
+                            'H15_3', 'H16_3', 'H17_3', 'H18_3', 'H19_3', 'H20_3'];
+
+    if (conditionalParents.includes(id) && previousValue !== val) {
+        renderSection(true);
+    }
+}
+
+function toggleCheck(id, val, el) { 
+  let key = `${id}_${val}`;
+  
+  if (id === 'F9' && val === 'Ninguno (pasar a la F14)') {
+    const todasLasOpciones = ['Fiebre (calentura)', 'Sudor frío', 'Escalofríos (chucho)', 
+                               'Diarrea', 'Tos', 'Dolor muscular', 'Mareos', 'Otro'];
+    for (let opt of todasLasOpciones) {
+      const otraKey = `${id}_${opt}`;
+      if (answers[otraKey] === true) {
+        answers[otraKey] = false;
+        const otrosElementos = document.querySelectorAll('.option-item');
+        otrosElementos.forEach(elem => {
+          const span = elem.querySelector('.option-text');
+          if (span && span.textContent === opt) {
+            elem.classList.remove('selected');
+            const chk = elem.querySelector('input');
+            if (chk) chk.checked = false;
+          }
+        });
+      }
+    }
+  }
+  
+  if (id === 'F9' && val !== 'Ninguno (pasar a la F14)') {
+    const ningunoKey = `${id}_Ninguno (pasar a la F14)`;
+    if (answers[ningunoKey] === true) {
+      answers[ningunoKey] = false;
+      const elementosNinguno = document.querySelectorAll('.option-item');
+      elementosNinguno.forEach(elem => {
+        const span = elem.querySelector('.option-text');
+        if (span && span.textContent === 'Ninguno (pasar a la F14)') {
+          elem.classList.remove('selected');
+          const chk = elem.querySelector('input');
+          if (chk) chk.checked = false;
+        }
+      });
+    }
+  }
+  
+  answers[key] = !answers[key]; 
+  el.classList.toggle('selected', !!answers[key]); 
+  let chk = el.querySelector('input'); 
+  if (chk) chk.checked = !!answers[key];
+  
+  if (val === 'Otro') {
+    const otherInput = document.getElementById(`other_input_${id}`);
+    if (otherInput) {
+      if (answers[key]) {
+        otherInput.classList.add('visible');
+        otherInput.focus();
+      } else {
+        otherInput.classList.remove('visible');
+        answers[`${id}_otro`] = '';
+        otherInput.value = '';
+      }
+    }
+  }
+  
+  if (id === 'F9') {
+    renderSection(true);
+  }
+  
+  if (id === 'D1') {
+    renderSection(true);
+  }
+}
+
+function setLikert(id,val,el){ answers[id]=val; let wrap=el.closest('.likert-wrap'); if(wrap) wrap.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function isVisible(id) {
+  const a = answers;
+  switch(id) {
+    case 'A3_1': return a['A3'] === 'Sí';
+    case 'A9':   return a['A8'] !== 'No tiene';
+    case 'B4_1': return a['B4'] === 'Sí';
+    case 'B6_1': return a['B6'] === 'Sí';
+    case 'B7_1': return a['B7'] === 'Sí';
+    case 'B13_1_2': return a['B13_1_1'] === 'Sí';
+    case 'B13_2_2': return a['B13_2_1'] === 'Sí';
+    case 'B13_3_2': return a['B13_3_1'] === 'Sí';
+    case 'C3_1': return a['C3'] === 'Sí';
+    case 'C4': return a['C3'] !== 'Sí';
+    case 'M4': return a['M3'] === 'No';
+    case 'M5': return a['M3'] === 'Sí';
+    case 'F6': case 'F7_1': return a['F5'] === 'Sí';
+    case 'F7_2': return a['F5'] === 'Sí' && (a['F7_1'] === 'Sí, malaria' || a['F7_1'] === 'Sí, dengue');
+    case 'F8':
+      if (a['F5'] !== 'Sí') return false;
+      if (a['F7_1'] === 'No' || a['F7_1'] === 'No sé') return true;
+      if ((a['F7_1'] === 'Sí, malaria' || a['F7_1'] === 'Sí, dengue') &&
+          (a['F7_2'] === '2 a 5 días (Pasar a F8)' || a['F7_2'] === 'Más de 5 días (Pasar a F8)')) {
+        return true;
+      }
+      return false;
+    case 'F9':
+      if (a['F5'] !== 'Sí') return false;
+      if (a['F7_1'] === 'No' || a['F7_1'] === 'No sé') return true;
+      if ((a['F7_1'] === 'Sí, malaria' || a['F7_1'] === 'Sí, dengue') &&
+          (a['F7_2'] === 'Menos de 3 horas (Pasar a F9)' || 
+           a['F7_2'] === 'Más de 3 horas, pero menos de 6 horas (Pasar a F9)' || 
+           a['F7_2'] === 'Más de 6 horas, pero menos de 1 día (Pasar a F9)')) {
+        return true;
+      }
+      return false;
+    case 'F10': case 'F11': case 'F12': case 'F13':
+      if (a['F5'] !== 'Sí') return false;
+      const tieneNinguno = a['F9_Ninguno (pasar a la F14)'] === true;
+      if (tieneNinguno) return false;
+      return true;
+    case 'F14': case 'F15': return true;
+    case 'F18': return a['F17'] === 'No';
+    case 'F19': return a['F17'] === 'Sí';
+    case 'H2': return a['H1'] === 'Sí';
+    case 'subtitle_h6': case 'H6_1': return a['H5'] === 'Sí';
+    case 'H6_2': case 'H6_3': case 'H6_4': return a['H5'] === 'Sí' && a['H6_1'] === 'Sí';
+    case 'subtitle_h7': case 'H7_1': return a['H5'] === 'Sí';
+    case 'H7_2': case 'H7_3': case 'H7_4': return a['H5'] === 'Sí' && a['H7_1'] === 'Sí';
+    case 'subtitle_h8': case 'H8_1': return a['H5'] === 'Sí';
+    case 'H8_2': case 'H8_3': case 'H8_4': return a['H5'] === 'Sí' && a['H8_1'] === 'Sí';
+    case 'subtitle_h9': case 'H9_1': return a['H5'] === 'Sí';
+    case 'H9_2': case 'H9_3': case 'H9_4': return a['H5'] === 'Sí' && a['H9_1'] === 'Sí';
+    case 'subtitle_h10': case 'H10_1': return a['H5'] === 'Sí';
+    case 'H10_2': case 'H10_3': case 'H10_4': return a['H5'] === 'Sí' && a['H10_1'] === 'Sí';
+    case 'subtitle_h11': case 'H11_1': return a['H5'] === 'Sí';
+    case 'H11_2': case 'H11_3': case 'H11_4': return a['H5'] === 'Sí' && a['H11_1'] === 'Sí';
+    case 'subtitle_h12': case 'H12_1': return a['H5'] === 'Sí';
+    case 'H12_2': case 'H12_3': case 'H12_4': return a['H5'] === 'Sí' && a['H12_1'] === 'Sí';
+    case 'subtitle_h13': case 'H13_1': return a['H5'] === 'Sí';
+    case 'H13_2': case 'H13_3': case 'H13_4': return a['H5'] === 'Sí' && a['H13_1'] === 'Sí';
+    case 'subtitle_h15': case 'H15_1': return a['H14'] === 'Sí';
+    case 'H15_2': case 'H15_3': return a['H14'] === 'Sí' && a['H15_1'] === 'Sí';
+        case 'H15_4': return a['H14'] === 'Sí' && a['H15_1'] === 'Sí' && a['H15_3'] !== 'No lo sé (pase a la H16)';
+    case 'subtitle_h16': case 'H16_1': return a['H14'] === 'Sí';
+    case 'H16_2': case 'H16_3': return a['H14'] === 'Sí' && a['H16_1'] === 'Sí';
+    case 'H16_4': return a['H14'] === 'Sí' && a['H16_1'] === 'Sí' && a['H16_3'] !== 'No lo sé (pase a la H17)';
+    case 'subtitle_h17': case 'H17_1': return a['H14'] === 'Sí';
+    case 'H17_2': case 'H17_3': return a['H14'] === 'Sí' && a['H17_1'] === 'Sí';
+    case 'H17_4': return a['H14'] === 'Sí' && a['H17_1'] === 'Sí' && a['H17_3'] !== 'No lo sé (pase a la H18)';
+    case 'subtitle_h18': case 'H18_1': return a['H14'] === 'Sí';
+    case 'H18_2': case 'H18_3': return a['H14'] === 'Sí' && a['H18_1'] === 'Sí';
+    case 'H18_4': return a['H14'] === 'Sí' && a['H18_1'] === 'Sí' && a['H18_3'] !== 'No lo sé (pase a la H19)';
+    case 'subtitle_h19': case 'H19_1': return a['H14'] === 'Sí';
+    case 'H19_2': case 'H19_3': return a['H14'] === 'Sí' && a['H19_1'] === 'Sí';
+    case 'H19_4': return a['H14'] === 'Sí' && a['H19_1'] === 'Sí' && a['H19_3'] !== 'No lo sé (pase a la H20)';
+    case 'subtitle_h20': case 'H20_1': return a['H14'] === 'Sí';
+    case 'H20_2': case 'H20_3': return a['H14'] === 'Sí' && a['H20_1'] === 'Sí';
+    case 'H20_4': return a['H14'] === 'Sí' && a['H20_1'] === 'Sí' && a['H20_3'] !== 'No lo sé';    
+    case 'I1_1': return true;
+    case 'I1_2': return true;
+    case 'I2': 
+      return a['I1_1'] !== undefined && a['I1_1'] !== '';
+    case 'I3':
+      return a['I1_2'] !== undefined && a['I1_2'] !== '';
+    case 'I4':
+      return (a['I1_2'] !== undefined && a['I1_2'] !== '') && 
+            a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
+    case 'I5':
+      return (a['I1_2'] !== undefined && a['I1_2'] !== '') && 
+            a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
+    case 'D1_1':
+      const opcionesD1 = [
+        'Sequía (ríos secos / mermante)',
+        'Lluvias irregulares',
+        'Inundaciones (crecientes)',
+        'Ola de calor',
+        'Derrumbes',
+        'Ganancia agrícola inusualmente baja (mala cosecha)',
+        'Ganancia inusualmente baja de actividad económica no agrícola'
+      ];
+      
+      let haySeleccion = false;
+      for (let opt of opcionesD1) {
+        if (a[`D1_${opt}`] === true) {
+          haySeleccion = true;
+          break;
+        }
+      }
+      
+      if (!haySeleccion && a['D1_Otro'] === true && a['D1_otro'] && a['D1_otro'].trim() !== '') {
+        haySeleccion = true;
+      }
+      
+      return haySeleccion;
+      
+    default: return true;
+  }
+}
+
+function getRequiredForSection(secIdx) {
+  const sections = buildFullSections();
+  const sec = sections[secIdx];
+  if (!sec) return [];
+  const required = [];
+  for (const q of sec.questions) {
+    if (q.type === 'subtitle') continue;
+    if (!isVisible(q.id)) continue;
+    if (isRequiredField(q.id, q.type)) {
+      required.push(q);
+    }
+  }
+  return required;
+}
+
+function isRequiredField(id, type) {
+  const optional = new Set([
+    'S0_cod', 'A9', 'B4_1','B6_1','B7_1', 'B13_1_2','B13_2_2','B13_3_2',
+    'C3_1', 'C4', 'M4','M5', 'F6','F7_1','F7_2','F8','F9','F10','F11','F12','F13',
+    'F18','F19', 'H2','H6_1','H6_2','H6_3','H6_4', 'H7_1','H7_2','H7_3','H7_4',
+    'H8_1','H8_2','H8_3','H8_4', 'H9_1','H9_2','H9_3','H9_4', 'H10_1','H10_2','H10_3','H10_4',
+    'H11_1','H11_2','H11_3','H11_4', 'H12_1','H12_2','H12_3','H12_4', 'H13_1','H13_2','H13_3','H13_4',
+    'H15_1','H15_2','H15_3','H15_4', 'H16_1','H16_2','H16_3','H16_4', 'H17_1','H17_2','H17_3','H17_4',
+    'H18_1','H18_2','H18_3','H18_4', 'H19_1','H19_2','H19_3','H19_4', 'H20_1','H20_2','H20_3','H20_4',
+    ,'I2','I3','I4','I5',
+    'A7',
+  ]);
+  
+  const explicit = new Set([
+    'S0_enc','S0_email','S0_cod','S0_zona','S0_dist',
+    'A1','A2','A3', 'A4_1','A4_2','A4_3','A4_4','A4_5','A4_6',
+    'A5','A6','A7','A8','A10', 'B1','B2','B3','B4','B6','B7','B9','B10','B11',
+    'B12_1_1','B12_1_2','B12_2_1','B12_2_2','B12_3_1','B12_3_2',
+    'B12_4_1','B12_4_2','B12_5_1','B12_5_2', 'B13_1_1','B13_2_1','B13_3_1',
+    'C2','C3','C5','C6','C7','C8','C9', 'C10_1','C10_2','C10_3','C10_4','C10_5','C10_6','C10_7',
+    'M1','M2','M3','M6','M7','M8','M9_1','M9_2','M9_3', 'F1','F2','F3','F4','F5','F15','F16_1','F16_2','F17',
+    'D1','D2','D3','D4','D5','D6','D7','D8', 'H1','H3','H4','H5','H14',
+    ,'I6','I7','I8','I9','I10', 'G1','G2','G3','G4','G5', 'E1','E2','E3','E4',
+    'B5', 'B8', 'C1'
+  ]);
+
+  const conditionalRequired = new Set([
+    'A3_1', 'B4_1', 'B6_1', 'B7_1', 'B13_1_2','B13_2_2','B13_3_2',
+    'C3_1', 'M4','M5', 'F6','F7_1', 'F7_2','F8','F9','F10','F11','F12','F13',
+    'F18','F19', 'H2',
+    'D1_1'
+  ]);
+
+  if (explicit.has(id)) return true;
+  if (conditionalRequired.has(id) && isVisible(id)) return true;
+  
+  if (id === 'I1_1') {
+      return !answers['I1_2'];
+  }
+  if (id === 'I1_2') {
+      return !answers['I1_1'];
+  }
+  
+  return false;
+}
+
+function hasAnswered(q) {
+  const a = answers;
+  if (q.type === 'text' || q.type === 'number') {
+    return a[q.id] !== undefined && String(a[q.id]).trim() !== '';
+  }
+  if (q.type === 'radio' || q.type === 'yesno' || q.type === 'yesno3' || q.type === 'freq4') {
+    return a[q.id] !== undefined && a[q.id] !== '';
+  }
+  if (q.type === 'likert5' || q.type === 'likert5b') {
+    return a[q.id] !== undefined && a[q.id] !== '';
+  }
+  if (q.type === 'checkbox') {
+    return q.options.some(opt => a[`${q.id}_${opt}`]);
+  }
+  return true;
+}
+
+function validateSection() {
+  const sections = buildFullSections();
+  const sec = sections[currentSection];
+  if (!sec) return true;
+
+  if (currentSection === 8) {
+    if (answers['I1_1'] && answers['I1_2']) {
+      showToast('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
+      return false;
+    }
+  }
+
+  const errors = [];
+  for (const q of sec.questions) {
+    if (q.type === 'subtitle') continue;
+    if (!isVisible(q.id)) continue;
+    if (!isRequiredField(q.id, q.type)) continue;
+    if (!hasAnswered(q)) {
+      errors.push(q);
+    }
+  }
+
+  if (errors.length > 0) {
+    let container = document.getElementById('main');
+    let existing = container.querySelector('.validation-summary');
+    if (existing) existing.remove();
+
+    let summary = document.createElement('div');
+    summary.className = 'validation-summary';
+    summary.innerHTML = `⚠️ Por favor responde ${errors.length} pregunta(s) obligatoria(s) antes de continuar.`;
+    container.insertBefore(summary, container.firstChild);
+
+    errors.forEach(q => {
+      const block = container.querySelector(`[data-qid="${q.id}"]`);
+      if (block) {
+        block.classList.add('has-error');
+        const inputs = block.querySelectorAll('input[type="text"], input[type="number"]');
+        inputs.forEach(i => i.classList.add('field-error'));
+        const optionsList = block.querySelector('.options-list');
+        if (optionsList) optionsList.classList.add('error-outline');
+        const likertWrap = block.querySelector('.likert-wrap');
+        if (likertWrap) likertWrap.style.outline = '2px solid var(--red)';
+        if (!block.querySelector('.error-msg')) {
+          const msg = document.createElement('div');
+          msg.className = 'error-msg';
+          msg.textContent = '* Campo obligatorio';
+          block.appendChild(msg);
+        }
+      }
+    });
+
+    const firstErr = container.querySelector('.has-error');
+    if (firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
+
+    return false;
+  }
+
+  return true;
+}
+
+// MODIFICADO: Función que solicita ubicación y la guarda en answers
+function obtenerUbicacion() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(posicion) {
+                const lat = posicion.coords.latitude;
+                const lng = posicion.coords.longitude;
+                const precision = posicion.coords.accuracy;
+                const urlGeo = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+                answers['ubicacion_lat'] = lat;
+                answers['ubicacion_lng'] = lng;
+                answers['ubicacion_precision'] = precision;
+                fetch(urlGeo)
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            answers['ubicacion_direccion'] = data.display_name;
+                            if (!answers['S0_ubic']) answers['S0_ubic'] = data.display_name;
+                        } else {
+                            answers['ubicacion_direccion'] = `Lat: ${lat}, Lng: ${lng}`;
+                            if (!answers['S0_ubic']) answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
+                        }
+                        showToast('Ubicación capturada automáticamente');
+                        renderSection();
+                    })
+                    .catch(err => {
+                        answers['ubicacion_direccion'] = `Lat: ${lat}, Lng: ${lng}`;
+                        if (!answers['S0_ubic']) answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
+                        renderSection();
+                    });
+            },
+            function(error) {
+                let mensaje = '';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED: mensaje = 'Permiso denegado para obtener ubicación'; break;
+                    case error.POSITION_UNAVAILABLE: mensaje = 'Información de ubicación no disponible'; break;
+                    case error.TIMEOUT: mensaje = 'Tiempo de espera agotado para obtener ubicación'; break;
+                    default: mensaje = 'Error desconocido al obtener ubicación'; break;
+                }
+                answers['ubicacion_error'] = mensaje;
+                showToast('No se pudo obtener ubicación: ' + mensaje);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    } else {
+        answers['ubicacion_error'] = 'Geolocalización no soportada por este navegador';
+        showToast('Este navegador no soporta geolocalización');
+    }
+}
+
+function renderQuestion(q){
+  let block=document.createElement('div'); 
+  block.className='question-block';
+  block.setAttribute('data-qid', q.id);
+  
+  const isReq = isRequiredField(q.id, q.type);
+  let html=`<div class="question-label">${q.text}${isReq ? '<span class="required-mark">*</span>' : ''}</div>`;
+  if(q.hint) html+=`<div class="hint">ℹ️ ${q.hint}</div>`;
+  if(q.skip) html+=`<div class="skip-note">⚠️ ${q.skip.replace(/\|/g, '<br>')}</div>`;
+  if(q.type==='text') html+=`<input type="text" value="${escHtml(answers[q.id]||'')}" placeholder="${q.placeholder||''}" onchange="setAnswer('${q.id}',this.value)">`;
+  else if(q.type==='number') html+=`<input type="number" step="1" value="${answers[q.id]||''}" placeholder="${q.placeholder||''}" onchange="setAnswer('${q.id}',this.value)">`;
+  else if(q.type==='radio'){
+    html+=`<div class="options-list">`;
+    q.options.forEach(opt=>{ let sel=answers[q.id]===opt?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${escHtml(opt)}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===opt?'checked':''}><span class="option-text">${opt}</span></label>`; });
+    html+=`</div>`;
+    if(q.hasOther){
+      let otherVal=answers[`${q.id}_otro`]||'';
+      let isVisibleOther = answers[q.id] === 'Otro';
+      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" onchange="setAnswer('${q.id}_otro',this.value)">`;
+    }
+  } else if(q.type==='checkbox'){
+    html+=`<div class="options-list">`;
+    q.options.forEach(opt=>{ let key=`${q.id}_${opt}`; let sel=answers[key]?'selected':''; html+=`<label class="option-item ${sel}" onclick="toggleCheck('${q.id}','${escHtml(opt)}',this)"><input type="checkbox" ${answers[key]?'checked':''}><span class="option-text">${opt}</span></label>`; });
+    html+=`</div>`;
+    if(q.hasOther){
+      let otherVal=answers[`${q.id}_otro`]||'';
+      let isVisibleOther = answers[`${q.id}_Otro`] === true;
+      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" onchange="setAnswer('${q.id}_otro',this.value)">`;
+    }
+  } else if(q.type==='yesno'){
+    html+=`<div class="options-list">`; ['Sí','No'].forEach(opt=>{ let sel=answers[q.id]===opt?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${opt}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===opt?'checked':''}><span class="option-text">${opt}</span></label>`; }); html+=`</div>`;
+  } else if(q.type==='yesno3'){
+    html+=`<div class="options-list">`; ['Sí','No','No lo sé'].forEach(opt=>{ let sel=answers[q.id]===opt?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${opt}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===opt?'checked':''}><span class="option-text">${opt}</span></label>`; }); html+=`</div>`;
+  } else if(q.type==='likert5'){
+    let opts=['Para nada','Un poco (ligeramente)','Moderadamente','Bastante (significativamente)','Extremadamente'];
+    html+=`<div class="likert-wrap">`; opts.forEach(o=>{ let sel=answers[q.id]===o?'selected':''; html+=`<button class="likert-btn ${sel}" onclick="setLikert('${q.id}','${o}',this)">${o}</button>`; }); html+=`</div>`;
+  } else if(q.type==='likert5b'){
+    let opts=['Nada','Un poco (ligeramente)','Moderadamente','Bastante (significativamente)','Mucho'];
+    html+=`<div class="likert-wrap">`; opts.forEach(o=>{ let sel=answers[q.id]===o?'selected':''; html+=`<button class="likert-btn ${sel}" onclick="setLikert('${q.id}','${o}',this)">${o}</button>`; }); html+=`</div>`;
+  } else if(q.type==='freq4'){
+    let opts=['Para nada','Varios días','Más de la mitad de los días','Casi todos los días'];
+    html+=`<div class="options-list">`; opts.forEach(o=>{ let sel=answers[q.id]===o?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${o}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===o?'checked':''}><span class="option-text">${o}</span></label>`; }); html+=`</div>`;
+  }
+  block.innerHTML=html;
+  return block;
+}
+
+function renderSection(keepScroll = false) { 
+  const scrollY = keepScroll ? window.scrollY : 0;
+  
+  updateProgress(); 
+  let el = document.getElementById('main'); 
+  el.innerHTML = ''; 
+  let sections = buildFullSections(); 
+  let sec = sections[currentSection]; 
+  if(!sec) return; 
+  let card = document.createElement('div'); 
+  card.className = 'section-card'; 
+  card.innerHTML = `<div class="section-title"><span class="section-icon">${sec.icon}</span>${sec.title}</div>`; 
+  
+  if(currentSection === 8 && !i1Locked && (answers['I1_1'] || answers['I1_2'] || i1AnswerSelected || i1TimerInterval)) {
+    const timerDiv = document.createElement('div');
+    timerDiv.className = 'timer-info';
+    timerDiv.id = 'i1-timer-container';
+    const tiempoMostrar = i1Locked ? 'Confirmado' : (i1TimeLeft + ' segundos');
+    timerDiv.innerHTML = `
+      <span>⏱️</span>
+      <span>Tienes <span class="timer-countdown" id="i1-timer-display">${tiempoMostrar}</span> para cambiar entre Grupo A y Grupo B</span>
+    `;
+    card.appendChild(timerDiv);
+}
+  
+  if(currentSection === 0 && (answers['ubicacion_lat'] || answers['ubicacion_error'])) {
+      let geoDiv = document.createElement('div');
+      geoDiv.className = 'geo-info';
+      if(answers['ubicacion_lat']) {
+          geoDiv.innerHTML = `📍 <strong>Ubicación automática:</strong><br>Lat: ${answers['ubicacion_lat']}, Lng: ${answers['ubicacion_lng']}<br>Precisión: ±${Math.round(answers['ubicacion_precision'])}m<br>${answers['ubicacion_direccion'] ? 'Dirección: ' + answers['ubicacion_direccion'].substring(0,100) : ''}`;
+      } else if(answers['ubicacion_error']) {
+          geoDiv.innerHTML = `⚠️ <strong>No se pudo obtener la ubicación automática</strong><br>${answers['ubicacion_error']}`;
+      }
+      card.appendChild(geoDiv);
+  }
+  
+  sec.questions.forEach(q => { 
+    if(q.type === 'subtitle') { 
+      if(!isVisible(q.id)) return;
+      let sub = document.createElement('div'); 
+      sub.className = 'question-block'; 
+      sub.setAttribute('data-qid', q.id);
+      sub.innerHTML = q.text; 
+      card.appendChild(sub); 
+    } else {
+      if(!isVisible(q.id)) return;
+      card.appendChild(renderQuestion(q)); 
+    }
+  }); 
+  el.appendChild(card); 
+  
+  setTimeout(() => {
+    const sectionsList = buildFullSections();
+    const currentSec = sectionsList[currentSection];
+    if (currentSec) {
+      currentSec.questions.forEach(q => {
+        if ((q.type === 'radio' || q.type === 'yesno' || q.type === 'yesno3') && q.hasOther) {
+          const otherInput = document.getElementById(`other_input_${q.id}`);
+          if (otherInput) {
+            if (answers[q.id] === 'Otro') {
+              otherInput.classList.add('visible');
+            } else {
+              otherInput.classList.remove('visible');
+            }
+          }
+        }
+        if (q.type === 'checkbox' && q.hasOther) {
+          const otherInput = document.getElementById(`other_input_${q.id}`);
+          if (otherInput) {
+            if (answers[`${q.id}_Otro`] === true) {
+              otherInput.classList.add('visible');
+            } else {
+              otherInput.classList.remove('visible');
+            }
+          }
+        }
+      });
+    }
+  }, 10);
+  
+  if (currentSection === 8 && i1Locked) {
+    lockI1Options();
+  }
+  
+  if (!keepScroll) {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } else {
+    window.scrollTo(0, scrollY);
+  }
+}
+
+function getLocalTimestamp() {
+    const ahora = new Date();
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const año = ahora.getFullYear();
+    const horas = String(ahora.getHours()).padStart(2, '0');
+    const minutos = String(ahora.getMinutes()).padStart(2, '0');
+    const segundos = String(ahora.getSeconds()).padStart(2, '0');
+    return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
+}
+
+function finishSurvey() {
+    answers.timestamp = getLocalTimestamp();
+    answers.id = editingId || Date.now().toString();
+    saveRecord(answers);
+    showComplete();
+}
+
+function showComplete(){ 
+    document.getElementById('main-app').classList.add('hidden'); 
+    document.getElementById('complete-screen').classList.remove('hidden'); 
+    editingId=null; 
+    resetI1TimerGlobal();
+}
+function newSurvey(){ 
+    answers={}; 
+    currentSection=0; 
+    resetI1TimerGlobal();
+    document.getElementById('complete-screen').classList.add('hidden'); 
+    document.getElementById('consent-screen').classList.remove('hidden'); 
+    document.getElementById('main-app').classList.add('hidden'); 
+}
+function getRecords(){ try{ return JSON.parse(localStorage.getItem('cap_records')||'[]'); }catch(e){ return []; } }
+function saveRecord(rec){ let records=getRecords(); let idx=records.findIndex(r=>r.id===rec.id); if(idx>=0) records[idx]=rec; else records.push(rec); localStorage.setItem('cap_records',JSON.stringify(records)); }
+function deleteRecord(id){ let records=getRecords().filter(r=>r.id!==id); localStorage.setItem('cap_records',JSON.stringify(records)); }
+function clearAll(){ if(confirm('¿Eliminar TODOS los registros?')){ localStorage.removeItem('cap_records'); renderRecords(); showToast('Todos los registros eliminados'); } }
+function showAdmin(){ document.getElementById('complete-screen').classList.add('hidden'); document.getElementById('admin-screen').classList.remove('hidden'); switchTab('records'); }
+function renderRecords(){ let records=getRecords(); let el=document.getElementById('records-list'); if(!records.length){ el.innerHTML=`<div class="empty-state"><div class="icon">📭</div><p>No hay registros guardados aún.</p></div>`; return; } 
+  el.innerHTML=records.map(r=>`<div class="record-card"><div class="record-meta">${new Date(r.timestamp).toLocaleString('es-PE')} · ID: ${r.id}</div><div class="record-info">👤 ${r['S0_enc']||'Sin nombre'} · ${r['A2']||'Sin comunidad'}${r._sent ? '<span class="sent-indicator"> ✓ Enviado</span>' : ''}</div><div class="record-actions"><button class="btn-sm btn-sm-primary" onclick="exportOne('${r.id}')">⬇️ CSV</button><button class="btn-sm btn-sm-danger" onclick="delRecord('${r.id}')">🗑️ Borrar</button></div></div>`).join(''); 
+}
+function delRecord(id){ if(confirm('¿Eliminar este registro?')){ deleteRecord(id); renderRecords(); showToast('Registro eliminado'); } }
+
+function getQuestionTextMap() {
+    const sections = buildFullSections();
+    const map = new Map();
+    for (const section of sections) {
+        for (const q of section.questions) {
+            if (q.id && q.text) {
+                map.set(q.id, q.text);
+            }
+            if (q.type === 'checkbox' && q.options) {
+                for (const opt of q.options) {
+                    map.set(`${q.id}_${opt}`, `${q.text} - ${opt}`);
+                }
+            }
+        }
+    }
+    map.set('id', 'ID de registro');
+    map.set('timestamp', 'Fecha y hora');
+    map.set('consent', 'Consentimiento informado');
+    map.set('S0_email', 'Correo electrónico');
+    map.set('ubicacion_lat', 'Ubicación - Latitud');
+    map.set('ubicacion_lng', 'Ubicación - Longitud');
+    return map;
+}
+
+function processRadioOtherAnswers(record) {
+    const processed = { ...record };
+    const radioWithOther = [
+        'A10', 'B6_1', 'B8', 'C1', 'C4', 'C7', 'C8', 'F1', 'F2', 'F8', 'F10', 'F18',
+        'G1', 'G2', 'G3', 'G4', 'M1', 'M4', 'M5', 'H6_2', 'H7_2', 'H8_2', 'H9_2',
+        'H10_2', 'H11_2', 'H12_2', 'H13_2', 'H15_3', 'H16_3', 'H17_3', 'H18_3',
+        'H19_3', 'H20_3', 'B12_1_1', 'B12_2_1', 'B12_3_1', 'B12_4_1', 'B12_5_1'
+    ];
+    
+    for (const id of radioWithOther) {
+        const value = processed[id];
+        const otherValue = processed[`${id}_otro`];
+        if (value === 'Otro' && otherValue && otherValue.trim() !== '') {
+            processed[id] = `Otro: ${otherValue.trim()}`;
+        }
+        delete processed[`${id}_otro`];
+    }
+    return processed;
+}
+
+function processMultipleChoiceAnswers(record) {
+    const processed = { ...record };
+    const multipleChoiceQuestions = ['F9', 'D1', 'B5', 'C5', 'F6', 'M8', 'H4', 'I6', 'I7', 'I8'];
+    
+    for (const questionId of multipleChoiceQuestions) {
+        const selectedOptions = [];
+        
+        for (const key in record) {
+            if (key.startsWith(`${questionId}_`) && record[key] === true && key !== `${questionId}_otro`) {
+                const option = key.substring(questionId.length + 1);
+                selectedOptions.push(option);
+            }
+        }
+        
+        if (record[`${questionId}_otro`] && record[`${questionId}_otro`].trim() !== '') {
+            const otroText = record[`${questionId}_otro`].trim();
+            const otroIndex = selectedOptions.findIndex(opt => opt === 'Otro');
+            if (otroIndex !== -1) {
+                selectedOptions[otroIndex] = `Otro: ${otroText}`;
+            } else {
+                selectedOptions.push(`Otro: ${otroText}`);
+            }
+        }
+        
+        if (selectedOptions.length > 0) {
+            processed[questionId] = selectedOptions.join(', ');
+        } else if (record[questionId] !== undefined && typeof record[questionId] !== 'string') {
+            delete processed[questionId];
+        }
+        
+        for (const key in processed) {
+            if (key.startsWith(`${questionId}_`)) {
+                delete processed[key];
+            }
+        }
+    }
+    
+    return processed;
+}
+
+function cleanExportRecord(rec) {
+    let cleaned = { ...rec };
+    const excludedFields = [
+        'ubicacion_precision',
+        'ubicacion_direccion',
+        'ubicacion_error'
+    ];
+    
+    for (const field of excludedFields) {
+        delete cleaned[field];
+    }
+    
+    return cleaned;
+}
+
+function recordToCSV(rec) {
+    let cleanedRec = cleanExportRecord(rec);
+    let processedRec = processRadioOtherAnswers(cleanedRec);
+    processedRec = processMultipleChoiceAnswers(processedRec);
+    
+    const map = getQuestionTextMap();
+    let keys = Object.keys(processedRec);
+    let header = keys.map(k => `"${map.get(k) || k}"`).join(',');
+    let row = keys.map(k => `"${String(processedRec[k]).replace(/"/g, '""')}"`).join(',');
+    return header + '\n' + row;
+}
+
+function allRecordsToCSV(records) {
+    if (!records.length) return '';
+    const map = getQuestionTextMap();
+    let allKeysSet = new Set();
+    
+    const processedRecords = records.map(rec => {
+        let cleaned = cleanExportRecord(rec);
+        let p = processRadioOtherAnswers(cleaned);
+        p = processMultipleChoiceAnswers(p);
+        return p;
+    });
+    
+    for (const rec of processedRecords) { 
+        for (const k of Object.keys(rec)) allKeysSet.add(k); 
+    }
+    
+    const mandatoryKeys = ['id','timestamp','consent','ubicacion_lat','ubicacion_lng'];
+    mandatoryKeys.forEach(k=>allKeysSet.add(k));
+    
+    let allKeys = Array.from(allKeysSet);
+    let header = allKeys.map(k => `"${map.get(k) || k}"`).join(',');
+    let rows = processedRecords.map(rec => allKeys.map(k => `"${String(rec[k] || '').replace(/"/g, '""')}"`).join(','));
+    return [header, ...rows].join('\n');
+}
+
+function downloadCSV(content,filename){ let BOM='\uFEFF'; let blob=new Blob([BOM+content],{type:'text/csv;charset=utf-8;'}); let url=URL.createObjectURL(blob); let a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function exportOne(id){ let rec=getRecords().find(r=>r.id===id); if(rec) downloadCSV(recordToCSV(rec),`encuesta_cap_${id}.csv`); showToast('CSV descargado'); }
+function exportAllCSV(){ let records=getRecords(); if(!records.length){ showToast('No hay registros'); return; } downloadCSV(allRecordsToCSV(records),`encuestas_cap_bolivia_${Date.now()}.csv`); showToast(`${records.length} encuesta(s) exportada(s)`); }
+function switchTab(tab){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); if(tab==='survey'){ document.getElementById('tab-survey').classList.add('active'); document.getElementById('main-app').classList.remove('hidden'); document.getElementById('admin-screen').classList.add('hidden'); document.getElementById('complete-screen').classList.add('hidden'); } else { document.getElementById('tab-records').classList.add('active'); document.getElementById('main-app').classList.add('hidden'); document.getElementById('admin-screen').classList.remove('hidden'); document.getElementById('complete-screen').classList.add('hidden'); renderRecords(); } }
+function showToast(msg){ let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+
+function buildFullSections() {
+  return [
+    { icon:'📋', title:'Sección 0. Datos del encuestador y ubicación', questions:[
+      { id:'S0_enc', type:'text', text:'Nombre del encuestador:' },
+      { id:'S0_email', type:'text', text:'Correo electrónico:' },  
+      { id:'S0_cod', type:'text', text:'Código:', hint:'Colocar las primeras letras de tus nombres y apellidos' }, 
+      { id:'S0_ubic', type:'text', text:'Ubicación:' },
+      { id:'S0_zona', type:'radio', text:'Indique a que Zona corresponde la comunidad:', options:['Urbana','Rural'] },
+      { id:'S0_dist', type:'radio', text:'Municipalidad', options:['Riberalta','Guayaramerín','Trinidad'] }
+    ]},
+    { icon:'👥', title:'Sección A. Demografía', questions:[
+      { id:'A1', type:'number', text:'A1. ¿Cuántos años llevas viviendo en la comunidad? (años)', skip:'Si es un año o menos, finaliza la encuesta, y avanza a la siguiente vivienda según el salto (k)' },
+      { id:'A2', type:'text', text:'A2. Nombre de la comunidad, pueblo o asentamiento humano' },
+      { id:'A3', type:'yesno', text:'A3. ¿Perteneces a una comunidad indígena?', skip:'Cuando la respuesta es afirmativa continue a A3.1, caso contrario pase a A4' },
+      { id:'A3_1', type:'text', text:'A3.1. Si es afirmativo ¿A qué comunidad?' },
+      { id:'subtitle_a4', type:'subtitle', text:'<strong>A4. Cantidad de personas en el hogar</strong>' },
+      { id:'A4_1', type:'number', text:'A4.1 ¿Cuántos hombres viven en tu casa?' }, { id:'A4_2', type:'number', text:'A4.2 ¿Cuántas mujeres viven en tu casa?' },
+      { id:'A4_3', type:'number', text:'A4.3 ¿Cuántas niñas y niños hasta 17 años viven en tu casa?' }, { id:'A4_4', type:'number', text:'A4.4 ¿Cuántos jóvenes de 18 a 29 años viven en tu casa?' },
+      { id:'A4_5', type:'number', text:'A4.5 ¿Cuántos adultos de 30 a 60 años viven en tu casa?' }, { id:'A4_6', type:'number', text:'A4.6 ¿Cuántos adultos mayores de más de 60 años viven en tu casa?' },
+      { id:'A5', type:'radio', text:'A5. Relación con el jefe/a de familia', options:['Jefe/a de hogar','Esposa/o o conviviente del jefe/a','Hijo/a (o adoptado) del jefe/a','Nieto/a del jefe/a'] },
+      { id:'A6', type:'radio', text:'A6. Sexo del jefe de hogar', options:['Masculino','Femenino'] }, 
+      { id:'A7', type:'number', text:'A7. Año de nacimiento del jefe de hogar', placeholder: 'Ej: 1990'},
+      { id:'A8', type:'radio', text:'A8. Sexo del cónyuge del jefe de hogar', options:['Masculino','Femenino','No tiene'] }, 
+      { id:'A9', type:'number', text:'A9. Año de nacimiento del cónyuge del jefe de hogar', placeholder:'Ej: 1990' },
+      { id:'A10', type:'radio', text:'A10. ¿Qué idioma hablan más en casa?', options:['Castellano/español','Otro'], hasOther: true }
+    ]},
+    { icon:'💼', title:'Sección B. Situación socioeconómica', questions:[
+      { id:'B1', type:'yesno', text:'B1. ¿El jefe de hogar sabe leer y escribir?' },
+      { id:'B2', type:'radio', text:'B2. ¿Cuál es el nivel educativo del jefe de hogar?', options:['Primaria completa','Primaria incompleta','Secundaria completa','Secundaria incompleta','Superior técnico completo','Superior técnico incompleto','Educación superior completa','No tiene educación','No sabe'] },
+      { id:'B3', type:'number', text:'B3. ¿Cuántos años fue el jefe de hogar a la escuela? (años)' },
+      { id:'B4', type:'yesno', text:'B4. ¿El jefe de hogar viajó regularmente por trabajo(s) temporal(es) el año pasado?', skip:'Cuando la respuesta es afirmativa continue a B4.1, caso contrario pase a B5' },
+      { id:'B4_1', type:'number', text:'B4.1. Si es así, ¿Él o ella cuánto tiempo estuvo en este pueblo el año pasado? (meses)' },
+      { id:'B5', type:'checkbox', text:'B5. ¿Participó el jefe de hogar en las siguientes actividades en los últimos 12 meses? (Marque todas las que crea)', options:['Cultivo de alimentos (chacra para consumo)','Cultivo para venta (chacra para negocio)','Cria de animales (ganadería/aves)','Actividades económicas no agrícolas (negocios, tiendas)','Empleo asalariado y jornalero (sueldo fijo o jornal)','Pesca o actividades forestales (madera)','Trabajo doméstico no remunerado','Otro'], hasOther: true },
+      { id:'B6', type:'yesno', text:'B6. ¿El jefe de familia trabaja para una empresa, institución o de forma independiente?', skip:'Cuando la respuesta es afirmativa continue a B6.1, caso contrario pase a B7' },
+      { id:'B6_1', type:'radio', text:'B6.1. Si es así, ¿en qué sector trabaja el jefe de familia?', options:['Agricultura, forestal (madera), pesca y caza','Minería, canteras y extracción de petróleo y gas','Construcción','Manufactura / fabricación','Comercio (mayorista y minorista / bodegas)','Transporte, almacenamiento y servicios públicos','Información y comunicaciones','Finanzas, seguros, bienes raíces y alquileres','Servicios profesionales, científicos, técnicos y de gestión','Servicios administrativos, de apoyo, gestión de residuos (limpieza)','Educación (profesor, estudiante, entre otros)','Atención de la salud y asistencia social (postas, hospitales)','Artes, entretenimiento, recreación, alojamiento y servicios de comida (restaurantes)','Otros servicios (reparación, personal, lavandería, trabajo doméstico, entre otros)','Prefiere no decir','Otro'], hasOther: true },
+      { id:'B7', type:'yesno', text:'B7. ¿La semana pasada, algún miembro del hogar dedicó tiempo a recolectar leña o materiales combustibles?', skip:'Cuando la respuesta es afirmativa continue a B7.1, caso contrario pase a B8' },
+      { id:'B7_1', type:'number', text:'B7.1. En promedio, ¿cuántas horas al día dedicaron los miembros del hogar en total a recolectar leña o materiales combustibles la semana pasada? (respuesta en horas)' },
+      { id:'B8', type:'radio', text:'B8. ¿Qué actividad es la principal fuente de ingresos del hogar?', options:['Cultivo de alimentos (chacra consumo)','Cultivo para venta (chacra negocio)','Crianza de animales','Actividades económicas no agrícolas (ej.negocio propio, bodega)','Empleo asalariado (sueldo/jornal)','Pesca o actividades forestales (madera)','Otro'], hasOther: true },
+      { id:'B9', type:'number', text:'B9. Si recibió alguna remesa o giro de dinero de familiares fuera de este hogar, ¿cuánto recibió el último año? (monto aproximado en bolivianos)' },
+      { id:'B10', type:'number', text:'B10. En los últimos 7 días, ¿cuánto dinero gastó su hogar? (monto aproximado en bolivianos)' },
+      { id:'B11', type:'radio', text:'B11. ¿Quién es el dueño de esta casa?', options:['Jefe de hogar o cónyuge','Alguien más dentro del hogar que no es el jefe ni el conyugue','Alguien de afuera'] },
+      { id:'subtitle_b12', type:'subtitle', text:'<strong>B12. ¿Cuánto tiempo toma acceder al más cercano siguiente?</strong>' },
+      { id:'subtitle_b12_1', type:'subtitle', text:'<strong>B12.1. Escuela primaria</strong>' },
+      { id:'B12_1_1', type:'radio', text:'B12.1.1. Escuela primaria. ¿Cómo llega allá?', options:['Pie','Bicicleta','Bus/colectivo','Vehículo propio','Otro'], hasOther: true },
+      { id:'B12_1_2', type:'number', text:'B12.1.2. Escuela primaria. Tiempo de viaje (solo ida, minutos)' },
+      { id:'subtitle_b12_2', type:'subtitle', text:'<strong>B12.2. Establecimiento de salud (posta)</strong>' },
+      { id:'B12_2_1', type:'radio', text:'B12.2.1. Establecimiento de salud (posta) ¿Cómo llega allá?', options:['Pie','Bicicleta','Bus/colectivo','Vehículo propio','Otro'], hasOther: true },
+      { id:'B12_2_2', type:'number', text:'B12.2.2. Establecimiento de salud (posta). Tiempo de viaje (solo ida, minutos)' },
+      { id:'subtitle_b12_3', type:'subtitle', text:'<strong>B12.3. Mercado</strong>' },
+      { id:'B12_3_1', type:'radio', text:'B12.3.1. Mercado ¿Cómo llega allá?', options:['Pie','Bicicleta','Bus/colectivo','Vehículo propio','Otro'], hasOther: true },
+      { id:'B12_3_2', type:'number', text:'B12.3.2. Mercado. Tiempo de viaje (solo ida, minutos)' },
+      { id:'subtitle_b12_4', type:'subtitle', text:'<strong>B12.4. Municipalidad/oficina local</strong>' },
+      { id:'B12_4_1', type:'radio', text:'B12.4.1. Municipalidad/oficina local ¿Cómo llega allá?', options:['Pie','Bicicleta','Bus/colectivo','Vehículo propio','Otro'], hasOther: true },
+      { id:'B12_4_2', type:'number', text:'B12.4.2. Municipalidad/oficina local. Tiempo de viaje (solo ida, minutos)' },
+      { id:'subtitle_b12_5', type:'subtitle', text:'<strong>B12.5. Banco</strong>' },
+      { id:'B12_5_1', type:'radio', text:'B12.5.1. Banco ¿Cómo llega allá?', options:['Pie','Bicicleta','Bus/colectivo','Vehículo propio','Otro'], hasOther: true },
+      { id:'B12_5_2', type:'number', text:'B12.5.2. Banco. Tiempo de viaje (solo ida, minutos)' },
+      { id:'subtitle_b13', type:'subtitle', text:'<strong>B13. Las siguientes preguntas están relacionadas con el gasto del hogar</strong>' },
+      { id:'subtitle_b13_1', type:'subtitle', text:'<strong>B13.1. Alimentos</strong>' },
+      { id:'B13_1_1', type:'yesno', text:'B13.1.1. En el último mes, ¿usted u otros en su hogar consumieron algún alimento comprado?', skip:'Cuando la respuesta es afirmativa continue a B13.1.2, caso contrario pase a B13.2' },
+      { id:'B13_1_2', type:'number', text:'B13.1.2. En el último mes, ¿cuánto gastaron usted u otros miembros en alimentación total? (Bs./) Si no hubo colocar cero' },
+      { id:'subtitle_b13_2', type:'subtitle', text:'<strong>B13.2. Salud y medicina</strong>' },
+      { id:'B13_2_1', type:'yesno', text:'B13.2.1. En el último mes, ¿usted u otros en su hogar consumieron algún servicio de salud o compraron medicina?', skip:'Cuando la respuesta es afirmativa continue a B13.2.2, caso contrario pase a B13.3' },
+      { id:'B13_2_2', type:'number', text:'B13.2.2. En el último mes, ¿cuánto gastaron usted u otros miembros en salud y medicina? (BS./) Si no hubo colocar cero' },
+      { id:'subtitle_b13_3', type:'subtitle', text:'<strong>B13.3. Otros artículos no alimenticios</strong>' },
+      { id:'B13_3_1', type:'yesno', text:'B13.3.1. En el último mes, ¿usted u otros en su hogar compraron algún artículo no alimenticio?', skip:'Cuando la respuesta es afirmativa continue a B13.3.2, caso contrario pase a la sección C' },
+      { id:'B13_3_2', type:'number', text:'B13.3.2. En el último mes, ¿cuánto gastaron usted u otros miembros en artículos no alimenticios? (Bs./) Si no hubo colocar cero' }
+    ]},
+    { icon:'🏠', title:'Sección C. Activos: bienes duraderos (Vivienda)', questions:[
+      { id:'C1', type:'radio', text:'C1. ¿Cuál es la ruta principal hacia este pueblo/barrio?', options:['Carretera asfaltada (Pista)','Carretera de tierra / afirmada','Trocha / Camino de tierra','Ruta fluvial (río o lago)','Otro'], hasOther: true },
+      { id:'C2', type:'yesno', text:'C2. ¿Tienen electricidad en este pueblo?' },
+      { id:'C3', type:'yesno', text:'C3. ¿Su hogar tiene electricidad del sistema interconectado (red pública)?', skip:'Cuando la respuesta es afirmativa continue a C3.1, caso contrario pase a C4' },
+      { id:'C3_1', type:'number', text:'C3.1. En caso sea afirmativo, ¿cuántas horas al día tiene electricidad su hogar en promedio? (horas)' },
+      { id:'C4', type:'radio', text:'C4. Si no tiene electricidad, ¿cuál es la principal fuente de energía en su hogar?', options:['Carbón y leña','Energía solar','Gas','Otro'], hasOther: true },
+      { id:'C5', type:'checkbox', text:'C5. ¿Cuáles son los dos principales combustibles usados para cocinar?', options:['Leña o carbón','Gas','Electricidad','Otro'], hasOther: true },
+      { id:'C6', type:'number', text:'C6. ¿Cuántas habitaciones (cuartos) tiene?' },
+      { id:'C7', type:'radio', text:'C7. Tipo de techo (observar)', options:['Vegetal o palma (Irapay/crisneja)','Calamina o zinc','Tejas de arcilla','Cemento','Otro'], hasOther: true },
+      { id:'C8', type:'radio', text:'C8. Tipo de pared (observar)', options:['Madera','Ladrillo o cemento (material noble)','Adobe','Quincha (madera cubierta con barro)','Otro'], hasOther: true },
+      { id:'C9', type:'radio', text:'C9. Tipo de piso (observar)', options:['Cemento','Machimbrado o madera pulida','Tierra o arena','Tablas de madera, pona u otras tablas de palma','Losetas/cerámica'] },
+      { id:'subtitle_c10', type:'subtitle', text:'<strong>C10. Bienes en el hogar</strong>' },
+      { id:'C10_1', type:'yesno', text:'C10.1. Celular' },
+      { id:'C10_2', type:'yesno', text:'C10.2. Smartphone (celular inteligente)' },
+      { id:'C10_3', type:'yesno', text:'C10.3. Radio' },
+      { id:'C10_4', type:'yesno', text:'C10.4. Televisor' },
+      { id:'C10_5', type:'yesno', text:'C10.5. Computadora' },
+      { id:'C10_6', type:'yesno', text:'C10.6. Vehículo (moto, bicicleta, canoa, peque-peque, otro)' },
+      { id:'C10_7', type:'yesno', text:'C10.7. Refrigeradora/congeladora' },
+      { id:'C10_8', type:'yesno', text:'C10.8. Carro o camión' }
+    ]},
+    { icon:'🦟', title:'Sección M. Comportamiento de prevención de la malaria y el dengue', questions:[
+      { id:'M1', type:'radio', text:'M1. ¿Dónde te pican más los mosquitos? (Por favor, seleccione una opción)', options:['Principalmente adentro, dentro de su casa','Principalmente adentro, en otro lugar que no es su casa (ej. trabajo, oficina, escuela, etc.)','Principalmente afuera, alrededor de su casa (ej. huerta, patio, balcón o vecindario inmediato)','Principalmente afuera, lejos de su casa (ej. en el monte, orilla del río, caminos, chacra u otros espacios públicos)','Igual adentro y afuera, o en varios lugares sin un patrón claro','Otro'], hasOther: true },
+      { id:'M2', type:'yesno', text:'M2. ¿Considera necesario fumigar dentro de la casa o recibir insecticida (abate) como parte de las prácticas para prevenir el contagio de malaria o dengue?' },
+      { id:'M3', type:'yesno', text:'M3. ¿Permitió que fumigaran su casa o recibió el insecticida (abate) en casa?', skip:'Cuando la respuesta es afirmativa continue a M5, caso contrario pase a M4' },
+      { id:'M4', type:'radio', text:'M4. Si la respuesta anterior fue no, ¿cuál fue la razón principal por la que no se fumigó su casa o no recibió abate (insecticida)?', options:['El equipo de fumigación no vino','No había nadie en casa','Daña las paredes','Es malo para nuestra salud, incluyendo mascotas, plantas y otros','No queríamos que vieran nuestra casa','Fumigar no sirve de nada','La fumigación es molesta / huele feo','No respetan mi cultura o forma de ser','No sé','Otro'], hasOther: true },
+      { id:'M5', type:'radio', text:'M5. ¿Quién fumigó la vivienda o entregó el abate (insecticida)?', options:['Trabajador del gobierno / programa (Ministerio de Salud y Deportes)','Empresa privada','ONG: World Vision o KOICA','Otras ONGs','No sé','Otro'], hasOther: true },
+      { id:'M6', type:'radio', text:'M6. ¿Cuándo fue la última vez que alguna casa en esta comunidad fue fumigada o recibió abate (insecticida)?', options:['Hace menos de 3 meses','Hace 3 a 5 meses','Hace 6 a 11 meses','Hace un año o más','Nunca','No sé'] },
+      { id:'M7', type:'number', text:'M7. ¿Cuántos mosquiteros tiene tu casa?' },
+      { id:'M8', type:'checkbox', text:'M8. ¿Cómo se protege su familia de la picadura del zancudo que transmite malaria o dengue? (Seleccione una opción)', options:['Dormimos cubiertos con el mosquitero','Usamos repelentes','No nos quedamos fuera de la casa por la noche o desde la hora que hay zancudos','Fumigamos la casa con insecticida o usamos el abate','Mantenemos el ambiente de la casa limpio','Rellenamos los charcos de agua estancada o eliminamos los objetos inservibles con agua','Cuando tenemos fiebre vamos al establecimiento de salud (posta)','Uso medicinas que me protegen de la malaria','No sé','Otro'], hasOther: true },
+      { id:'subtitle_m9', type:'subtitle', text:'<strong>M9. Importancia de la afirmación</strong>' },
+      { id:'M9_1', type:'likert5', text:'M9.1. Es importante ir al centro de salud (posta) rápidamente cuando se tienen síntomas de malaria o dengue' },
+      { id:'M9_2', type:'likert5', text:'M9.2. Es importante tomar la medicina para la malaria rápidamente cuando se diagnostica malaria o dengue' },
+      { id:'M9_3', type:'likert5', text:'M9.3. Es importante fumigar contra los zancudos y mantener un ambiente limpio para prevenir malaria o dengue' }
+    ]},
+    { icon:'🏥', title:'Sección F. Salud', questions:[
+      { id:'F1', type:'radio', text:'F1. ¿Qué hace usualmente si un familiar (incluido usted) en casa tiene síntomas de fiebre, malaria o dengue?', options:['Ir inmediatamente al establecimiento de salud (posta)','Ir a la farmacia / botica por un medicamento','Tratar en casa con cuidados personales','Medicina natural','Nada','Otro'], hasOther: true },
+      { id:'F2', type:'radio', text:'F2. ¿Qué hace usualmente en su casa para desinfectar el agua antes de beberla? (Seleccione una opción)', options:['Hervirla','Comprar agua de un pilón o grifo tratado de la comunidad','Usar un filtro (ej. cerámica, filtro de carbón activado)','Usar el método de desinfección solar','Usar lámpara UV o purificador UV','Dejar que el agua se asiente','No hago nada','Otro'], hasOther: true },
+      { id:'F3', type:'yesno3', text:'F3. ¿Alguien de la familia se ha atendido con la brigada de salud o campaña médica móvil?' },
+      { id:'F4', type:'yesno', text:'F4. Durante los últimos 12 meses, ¿algún miembro de la familia (incluido usted) fue hospitalizado o pasó la noche(s) en un establecimiento salud?' },
+      { id:'F5', type:'yesno', text:'F5. Durante los últimos seis meses, ¿algún miembro de la familia (incluido usted) ha sufrido alguna enfermedad o lesión? Si hubo múltiples eventos, pregunte sobre el caso más reciente', skip:'Cuando la respuesta es afirmativa continue a F6, caso contrario pase a F14' },
+      { id:'F6', type:'checkbox', text:'F6. ¿Cuál fue la enfermedad o lesión? (*elija hasta dos)', options:['Malaria','Dengue','Dolor de estómago','Agotamiento por calor / insolación / golpe de calor','Vómitos','Otros síntomas de oído/nariz/garganta incluyendo asma','Anemia','Dolor de cabeza / desmayos','Problema de la piel / problema dental / problema de los ojos','Problema del corazón / presión arterial','Diabetes','Dolores de cuerpo y articulaciones','Otro'], hasOther: true },
+      { id:'subtitle_f7', type:'subtitle', text:'<strong>F7. Malaria o dengue</strong>' },
+      { id:'F7_1', type:'radio', text:'F7.1. ¿Un profesional de la salud le dijo a usted o a su familiar que tienen malaria o dengue?', options:['Sí, malaria','Sí, dengue','No','No sé'], skip:'Cuando la respuesta sea "No" o "No sé", pase a F8; caso contrario continue a F7.2' },
+      { id:'F7_2', type:'radio', text:'F7.2. Si fue Malaria o Dengue en F7.1) ¿Cuánto tiempo tomó desde la prueba inicial para obtener un diagnóstico confirmado?', options:['Menos de 3 horas (Pasar a F9)','Más de 3 horas, pero menos de 6 horas (Pasar a F9)','Más de 6 horas, pero menos de 1 día (Pasar a F9)','2 a 5 días (Pasar a F8)','Más de 5 días (Pasar a F8)'] },
+      { id:'F8', type:'radio', text:'F8. Si usted o alguien de su familia tuviera fiebre o cualquier otro síntoma de malaria o dengue, ¿cuál sería la principal razón por la que retrasaría la visita al centro de salud? (Seleccione una opción)', options:['La distancia es demasiado grande','El coste es demasiado alto','El tiempo de espera es demasiado largo','Servicio deficiente (mala atención)','Prefiero la atención tradicional (curanderos)','Los síntomas no eran graves','Otro (especificar)'], hasOther: true },
+      { id:'F9', type:'checkbox', text:'F9. ¿Usted o su familiar experimentaron alguno de los siguientes síntomas? (*elija hasta 3)', skip:'Cuando la respuesta sea ninguno pase a F14, caso contrario siga a F10', options:['Fiebre (calentura)','Sudor frío','Escalofríos (chucho)','Diarrea','Tos','Dolor muscular','Mareos','Ninguno (pasar a la F14)','Otro'], hasOther: true },
+      { id:'F10', type:'radio', text:'F10. ¿Qué acción tomó para aliviar su enfermedad?', options:['No hice nada, no era grave','No hice nada, no tengo dinero','Usé medicina que tenía guardada','Remedios caseros conocidos','Busqué tratamiento en establecimiento de salud del gobierno (Posta)','Busqué tratamiento en iglesia/misión','Busqué tratamiento en establecimiento de salud privado (Clínica)','Busqué tratamiento en botiquín comunal / con promotor de salud','Fui a la farmacia local','Fui a la bodega local por medicina','Busqué tratamiento con curandero tradicional','Otro'], hasOther: true },
+      { id:'F11', type:'number', text:'F11. Durante los últimos seis meses, ¿cuántos días tuvo que dejar sus actividades normales debido a esta enfermedad? (si no fue ningún día, anote cero)' },
+      { id:'F12', type:'number', text:'F12. Durante los últimos seis meses, ¿cuántos días alguien más en el hogar tuvo que dejar sus actividades normales para cuidar a otros miembros de la familia (incluido usted)? (Si no fue ningún día, anote cero)' },
+      { id:'F13', type:'number', text:'F13. Durante los últimos seis meses, ¿cuántos días tuvo que dejar sus actividades normales debido a la(s) enfermedad(es) de sus hijos? (Si no fue ningún día, anote cero)' },
+      { id:'F14', type:'number', text:'F14. Durante los últimos seis meses, ¿cuántos días visitó el establecimiento de salud del gobierno local (posta)? (Si no fue ningún día, anote cero)' },
+      { id:'F15', type:'number', text:'F15. Durante los últimos seis meses, ¿cuántos días visitó un establecimiento de salud privado? (Si no fue ningún día, anote cero)' },
+      { id:'subtitle_f16', type:'subtitle', text:'<strong>F16. Durante los últimos seis meses, ¿con qué frecuencia te han molestado los siguientes problemas?</strong>' },
+      { id:'F16_1', type:'freq4', text:'F16.1. Poco interés o placer en hacer cosas:' },
+      { id:'F16_2', type:'freq4', text:'F16.2. Sentirse decaído, deprimido o sin esperanza:' },
+      { id:'F17', type:'yesno', text:'F17. Si usted o alguien de su familia tiene fiebre, ¿considera necesario hacerse la prueba de malaria o dengue?', skip:'Cuando la respuesta es afirmativa continue a F19, caso contrario pase a F18' },
+      { id:'F18', type:'radio', text:'F18. Si respondió no a la pregunta anterior, ¿por qué no se haría la prueba de malaria o dengue si sospecha (tiene fiebre)?', options:['Es muy invasiva (muchas inyecciones/hincadas)','No es confiable','El costo es muy alto','El tiempo de espera es muy largo','Prefiero la atención tradicional','Los síntomas no eran graves','No lo sé','Otro'], hasOther: true },
+      { id:'F19', type:'radio', text:'F19. Solo si fue en el último año a la posta por fiebre (calentura) suya o de un familiar para descartar Malaria o Dengue: ¿Tenían pruebas disponibles?', options:['Sí','No','Nunca fui'] }
+    ]},
+    { icon:'🌡️', title:'Sección D. Impacto y percepciones del clima', questions:[
+      { id:'D1', type:'checkbox', text:'D1. Durante los últimos dos años, ¿su hogar fue afectado por los impactos del cambio climático, tales como: (hasta tres opciones, ordenadas por el grado de afectación)?', options:['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola','Ninguno','Otro'], hasOther: true },
+      { id:'D1_1', type:'text', text:'D1.1. Según la pregunta anterior ordene de mayor a menor el grado de afectación, los tres impactos del cambio climático seleccionados', placeholder:'Ej: 1. Sequía, 2. Inundaciones, 3. Ola de calor' },
+      { id:'D2', type:'likert5b', text:'D2. ¿Ha escuchado sobre cambio climático y calentamiento global?' },
+      { id:'D3', type:'likert5b', text:'D3. En los últimos 2 años, he notado que las lluvias fuertes favorecen la presencia de zancudos (mosquitos)' },
+      { id:'D4', type:'likert5b', text:'D4. En los últimos 2 años, he notado que el cambio climático afecta el brote de malaria o dengue' },
+      { id:'D5', type:'likert5b', text:'D5. En los últimos 2 años, he notado que los ríos, cañerías, lagos (cochas), arroyos (quebradas) u otros cuerpos de agua se secan con más frecuencia' },
+      { id:'D6', type:'likert5b', text:'D6. En los últimos 2 años, he notado un aumento en el número de olas de calor o fuertes bochornos' },
+      { id:'D7', type:'likert5b', text:'D7. ¿En qué medida cree que el cambio climático afectará la prevalencia (cantidad) de zancudos?' },
+      { id:'D8', type:'likert5b', text:'D8. ¿En qué medida cree que el cambio climático afectará los brotes de malaria o dengue?' }
+    ]},
+    { icon:'🤝', title:'Sección H. Apoyo Comunitario y actividades', questions:[
+      { id:'H1', type:'yesno', text:'H1. ¿Ha participado en alguna asociación, grupo o comité ambiental, o en uno que proteja el agua y el medio ambiente?', skip:'Cuando la respuesta es afirmativa continue a H2, caso contrario pase a H3' },
+      { id:'H2', type:'yesno', text:'H2. Si es así: ¿La organización, comité o institución en la que participó sigue activa o trabajando?' },
+      { id:'H3', type:'yesno', text:'H3. ¿Ha participado en algún grupo de defensa comunitaria? (Por ejemplo, contra el dengue, malaria, mordeduras de serpiente u otras enfermedades.)' },
+      { id:'H4', type:'checkbox', text:'H4. En los últimos 6 meses, ¿cuál de las siguientes actividades relacionadas con la prevención del dengue o malaria ha visto, escuchado o realizado con más frecuencia en su comunidad? (Seleccione una opción)', options:['He escuchado anuncios o programas de radio','He visto anuncios o programas de TV','He visto murales o carteles pintados en las paredes con mensajes sobre dengue y malaria','He asistido a charlas o reuniones comunitarias sobre el tema','Promotores de salud han visitado mi casa','He recibido información a través de redes sociales (Facebook, WhatsApp, etc.)','No he visto ni escuchado nada sobre el tema','Otro'], hasOther: true },
+      { id:'H5', type:'yesno', text:'H5. Durante el último año, ¿participó en algún programa de capacitación o campaña relacionada con la salud?', skip:'Si responde Sí en H5, complete desde H6|Si responde No en H5, complete desde H14' },
+      
+      { id:'subtitle_h6', type:'subtitle', text:'<strong>H6. Formación en malaria o dengue</strong>' },
+      { id:'H6_1', type:'yesno', text:'H6.1. ¿Supo o escuchó de algún programa o actividad sobre formación en malaria o dengue?', skip:'Cuando la respuesta es afirmativa continue a H6.2, caso contrario pase a H7' },
+      { id:'H6_2', type:'radio', text:'H6.2. ¿Quién realizó la formación en malaria o dengue?', options:['Gobierno (Ministerio de Salud y Deportes, municipio)','World Vision','Otras ONG','Otro'], hasOther: true },
+      { id:'H6_3', type:'yesno', text:'H6.3. ¿Usted participó en el programa o actividad de malaria o dengue?' },
+      { id:'H6_4', type:'radio', text:'H6.4. ¿Cuándo empezó este programa o actividad de malaria o dengue?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h7', type:'subtitle', text:'<strong>H7. Formación sobre cambio climático</strong>' },
+      { id:'H7_1', type:'yesno', text:'H7.1. ¿Supo o escuchó de algún programa de capacitación sobre cambio climático?', skip:'Cuando la respuesta es afirmativa continue a H7.2, caso contrario pase a H8' },
+      { id:'H7_2', type:'radio', text:'H7.2. ¿Quién realizó la formación sobre cambio climático?', options:['Gobierno (Ministerio de Salud y Deportes, municipio)','World Vision','Otras ONG','Otro'], hasOther: true },
+      { id:'H7_3', type:'yesno', text:'H7.3. ¿Usted participó en el programa de capacitación sobre cambio climático?' },
+      { id:'H7_4', type:'radio', text:'H7.4. ¿Cuándo empezó este programa de capacitación sobre cambio climático?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h8', type:'subtitle', text:'<strong>H8. Visitas de trabajadores comunitarios de salud</strong>' },
+      { id:'H8_1', type:'yesno', text:'H8.1. ¿Supo o escuchó de algún programa o actividad sobre visitas de trabajadores comunitarios de salud?', skip:'Cuando la respuesta es afirmativa continue a H8.2, caso contrario pase a H9' },
+      { id:'H8_2', type:'radio', text:'H8.2. ¿Quién realizó la formación en visitas de trabajadores comunitarios de salud?', options:['Gobierno (Ministerio de Salud y Deportes, município)','World Vision','Otras ONG','Otro'], hasOther: true },
+      { id:'H8_3', type:'yesno', text:'H8.3. ¿Usted participó en el programa sobre visitas de trabajadores comunitarios de salud?' },
+      { id:'H8_4', type:'radio', text:'H8.4. ¿Cuándo empezó este programa sobre visitas de trabajadores comunitarios de salud?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h9', type:'subtitle', text:'<strong>H9. Programa de limpieza local</strong>' },
+      { id:'H9_1', type:'yesno', text:'H9.1. ¿Supo o escuchó de algún programa o actividad sobre limpieza local?', skip:'Cuando la respuesta es afirmativa continue a H9.2, caso contrario pase a H10' },
+      { id:'H9_2', type:'radio', text:'H9.2. ¿Quién realizó la formación en el programa o actividad sobre limpieza local?', options:['Gobierno (Ministerio de Salud y Deportes, municipio)','World Vision','Otras ONG','No sé','Otro'], hasOther: true },
+      { id:'H9_3', type:'yesno', text:'H9.3. ¿Usted participó en el programa o actividad sobre limpieza local?' },
+      { id:'H9_4', type:'radio', text:'H9.4. ¿Cuándo empezó este programa o actividad sobre limpieza local en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h10', type:'subtitle', text:'<strong>H10. Campaña local relacionada con limpieza de la comunidad</strong>' },
+      { id:'H10_1', type:'yesno', text:'H10.1. ¿Supo o escuchó de algún programa de campaña local relacionado con limpieza de la comunidad?', skip:'Cuando la respuesta es afirmativa continue a H10.2, caso contrario pase a H11' },
+      { id:'H10_2', type:'radio', text:'H10.2. ¿Quién realizó el programa o actividad de campaña local relacionado con limpieza de la comunidad?', options:['Gobierno (Ministerio de Salud y Deportes, municipio)','World Vision','Otras ONG','No sé','Otro'], hasOther: true },
+      { id:'H10_3', type:'yesno', text:'H10.3. ¿Usted participó en el programa relacionado con limpieza de la comunidad?' },
+      { id:'H10_4', type:'radio', text:'H10.4. ¿Cuándo empezó este programa relacionado con limpieza de la comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h11', type:'subtitle', text:'<strong>H11. Instalación de mosquiteros</strong>' },
+      { id:'H11_1', type:'yesno', text:'H11.1. ¿Supo o escuchó de algún programa o actividad de instalación de mosquiteros?', skip:'Cuando la respuesta es afirmativa continue a H11.2, caso contrario pase a H12' },
+      { id:'H11_2', type:'radio', text:'H11.2. ¿Quién realizó el programa o actividad de instalación de mosquiteros?', options:['Gobierno (Ministerio de Salud y Deportes, município)','World Vision','Otras ONG','No sé','Otro'], hasOther: true },
+      { id:'H11_3', type:'yesno', text:'H11.3. ¿Usted participó en el programa o actividad de instalación de mosquiteros?' },
+      { id:'H11_4', type:'radio', text:'H11.4. ¿Cuándo empezó este programa o actividad de instalación de mosquiteros?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h12', type:'subtitle', text:'<strong>H12. Fumigación o uso del abate</strong>' },
+      { id:'H12_1', type:'yesno', text:'H12.1. ¿Supo o escuchó de algún programa o actividad sobre formación en fumigación o uso del abate?', skip:'Cuando la respuesta es afirmativa continue a H12.2, caso contrario pase a H13' },
+      { id:'H12_2', type:'radio', text:'H12.2. ¿Quién realizó el programa o actividad de formación en fumigación o uso del abate?', options:['Gobierno (Ministerio de Salud y Deportes, município)','World Vision','Otras ONG','No sé','Otro'], hasOther: true },
+      { id:'H12_3', type:'yesno', text:'H12.3. ¿Usted participó en el programa o actividad sobre formación en fumigación o uso del abate?' },
+      { id:'H12_4', type:'radio', text:'H12.4. ¿Cuándo empezó este programa o actividad sobre formación en fumigación o uso del abate en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'subtitle_h13', type:'subtitle', text:'<strong>H13. Reunión comunitaria para debatir temas de salud, higiene o cambio climático</strong>' },
+      { id:'H13_1', type:'yesno', text:'H13.1. ¿Supo o escuchó de alguna reunión comunitaria para debatir temas de salud, higiene o cambio climático?', skip:'Cuando la respuesta es afirmativa continue a H13.2, caso contrario pase a H14' },
+      { id:'H13_2', type:'radio', text:'H13.2. ¿Quién realizó la reunión comunitaria para debatir temas de salud, higiene o cambio climático?', options:['Gobierno (Ministerio de Salud y Deportes, municipio)','World Vision','Otras ONG','No sé','Otro'], hasOther: true },
+      { id:'H13_3', type:'yesno', text:'H13.3. ¿Usted participó en la reunión comunitaria para debatir temas de salud, higiene o cambio climático?' },
+      { id:'H13_4', type:'radio', text:'H13.4. ¿Cuándo empezó esta reunión comunitaria para debatir temas de salud, higiene o cambio climático?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+
+      { id:'H14', type:'yesno', text:'H14. ¿Existe algún grupo comunitario voluntario en el pueblo?', skip:'Si responde Sí, complete las preguntas de H15 a H20|Si responde No, proceder con la Sección I' },
+
+      { id:'subtitle_h15', type:'subtitle', text:'<strong>H15. Cooperativa agrícola</strong>' },
+      { id:'H15_1', type:'yesno3', text:'H15.1. ¿Existe la cooperativa agrícola en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H15.2, cuando sea "no" o "no lo sé", pase a H16' },
+      { id:'H15_2', type:'radio', text:'H15.2. ¿Cuándo se formó la cooperativa agrícola en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H15_3', type:'radio', text:'H15.3. ¿Con qué frecuencia se reúnen los miembros de la cooperativa agrícola en su comunidad?', options:['Cada 2 a 3 días','Semanalmente','Quincenalmente','Mensualmente','Trimestralmente','Anualmente','No lo sé (pase a la H16)','Otro'], hasOther: true },
+      { id:'H15_4', type:'number', text:'H15.4. ¿Cuántos miembros participan en la reunión o actividades de la cooperativa agrícola en su comunidad? (en número) - Si no sabe poner 0' },
+
+      { id:'subtitle_h16', type:'subtitle', text:'<strong>H16. Grupo de ahorro y crédito</strong>' },
+      { id:'H16_1', type:'yesno3', text:'H16.1. ¿Existe un grupo de ahorro y crédito en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H16.2, cuando sea "no" o "no lo sé", pase a H17' },
+      { id:'H16_2', type:'radio', text:'H16.2. ¿Cuándo se formó el grupo de ahorro y crédito en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H16_3', type:'radio', text:'H16.3. ¿Con qué frecuencia se reúnen los miembros del grupo de ahorro y crédito en su comunidad?', options:['Cada 2 a 3 días','Semanalmente','Quincenalmente','Mensualmente','Trimestralmente','Anualmente','No lo sé (pase a la H17)','Otro'], hasOther: true },
+      { id:'H16_4', type:'number', text:'H16.4. ¿Cuántos miembros participan en la reunión o actividades del grupo de ahorro y crédito en su comunidad? (en número) - Si no sabe poner 0' },
+
+      { id:'subtitle_h17', type:'subtitle', text:'<strong>H17. Grupo de mujeres (club de madres/vaso de leche)</strong>' },
+      { id:'H17_1', type:'yesno3', text:'H17.1. ¿Existe un grupo de mujeres (club de madres/vaso de leche) en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H17.2, cuando sea "no" o "no lo sé", pase a H18' },
+      { id:'H17_2', type:'radio', text:'H17.2. ¿Cuándo se formó el grupo de mujeres (club de madres/vaso de leche) en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H17_3', type:'radio', text:'H17.3. ¿Con qué frecuencia se reúnen los miembros del grupo de mujeres (club de madres/vaso de leche) en su comunidad?', options:['Cada 2 a 3 días','Semanalmente','Quincenalmente','Mensualmente','Trimestralmente','Anualmente','No lo sé (pase a la H18)','Otro'], hasOther: true },
+      { id:'H17_4', type:'number', text:'H17.4. ¿Cuántos miembros participan en la reunión o actividades del grupo de mujeres (club de madres/vaso de leche) en su comunidad? (en número) - Si no sabe poner 0' },
+
+      { id:'subtitle_h18', type:'subtitle', text:'<strong>H18. Grupo juvenil</strong>' },
+      { id:'H18_1', type:'yesno3', text:'H18.1. ¿Existe algún grupo juvenil en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H18.2, cuando sea "no" o "no lo sé", pase a H19' },
+      { id:'H18_2', type:'radio', text:'H18.2. ¿Cuándo se formó el grupo juvenil en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H18_3', type:'radio', text:'H18.3. ¿Con qué frecuencia se reúnen los miembros del grupo juvenil en su comunidad?', options:['Cada 2 a 3 días','Semanalmente','Quincenalmente','Mensualmente','Trimestralmente','Anualmente','No lo sé (pase a la H19)','Otro'], hasOther: true },
+      { id:'H18_4', type:'number', text:'H18.4. ¿Cuántos miembros participan en la reunión o actividades del grupo juvenil en su comunidad? (en número) - Si no sabe poner 0' },
+
+      { id:'subtitle_h19', type:'subtitle', text:'<strong>H19. Comité de salud</strong>' },
+      { id:'H19_1', type:'yesno3', text:'H19.1. ¿Existe algún comité de salud en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H19.2, cuando sea "no" o "no lo sé", pase a H20' },
+      { id:'H19_2', type:'radio', text:'H19.2. ¿Cuándo se formó el comité de salud?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H19_3', type:'radio', text:'H19.3. ¿Con qué frecuencia se reúnen los miembros del comité de salud?', options:['Cada 2 a 3 días','Semanal','Quincenal','Mensual','Trimestral','Anual','No lo sé (pase a la H20)','Otro'], hasOther: true },
+      { id:'H19_4', type:'number', text:'H19.4. ¿Cuántos miembros participan en la reunión o actividades del comité de salud? (en número) - Si no sabe poner 0' },
+
+      { id:'subtitle_h20', type:'subtitle', text:'<strong>H20. Grupo comunitario de limpieza</strong>' },
+      { id:'H20_1', type:'yesno3', text:'H20.1. ¿Existe algún grupo comunitario de limpieza en su comunidad?', skip:'Cuando la respuesta es afirmativa continue a H20.2, cuando sea "no" o "no lo sé", pase a la sección I' },
+      { id:'H20_2', type:'radio', text:'H20.2. ¿Cuándo se formó el grupo de limpieza en su comunidad?', options:['Hace menos de 6 meses','Hace más de 6 meses, pero menos de 1 año','Hace 1 a 2 años','Hace más de 2 años'] },
+      { id:'H20_3', type:'radio', text:'H20.3. ¿Con qué frecuencia se reúnen los miembros del grupo de limpieza en su comunidad?', options:['Cada 2 a 3 días','Semanal','Quincenal','Mensual','Trimestral','Anual','No lo sé','Otro'], hasOther: true },
+      { id:'H20_4', type:'number', text:'H20.4. ¿Cuántos miembros participan en la reunión o actividades del grupo de limpieza en su comunidad? (en número) - Si no sabe poner 0' }    
+    ]},
+    { icon:'💧', title:'Sección I. Agua y Saneamiento', questions:[
+      { id:'subtitle_i1', type:'subtitle', text:'<strong>I1. ¿Cuál es la principal fuente de agua para beber que utiliza este hogar?<br>(Elija una fuente que se usa la mayor parte del tiempo para beber.)<br>Aquí puedes responder en grupo A o grupo B, pero no en ambos</strong>' },
+      { id:'I1_1', type:'radio', text:'I1.1. Grupo A: Agua potable', options:['Agua entubada dentro de la vivienda/patio/terreno (red pública)','Pilón público / Grifo público','Pozo tubular / Perforación','Pozo excavado protegido','Manantial protegido','Otro'], hasOther: true },
+      { id:'I1_2', type:'radio', text:'I1.2. Grupo B: Agua necesariamente potable', options:['Pozo excavado no protegido','Manantial no protegido','Agua superficial (ej. río, represa, lago/cocha, estanque)','Agua embotellada (verifique la fuente principal para otros usos del hogar)','Quiosco','Camión cisterna','Otro'], hasOther: true, skip:'Solo puede responder uno de los grupos A o B' },
+      { id:'I2', type:'text', text:'I2. (Si respondió en grupo A en I1) ¿Cómo describiría la disponibilidad diaria de agua de su fuente principal de agua entubada en las últimas dos semanas? (horas por día)', placeholder:'Ej: 12 horas' },
+      { id:'I3', type:'radio', text:'I3. (Si respondió en grupo B en I1) ¿Está ubicada la fuente principal de agua dentro de los predios de su hogar? (¿Dentro del terreno o dentro de la vivienda?)', options:['Sí, en el predio, dentro de la vivienda/edificio (pase a la I6)','Sí, en el predio, dentro del terreno/patio/lote (pase a la I6)','No hay instalaciones en el predio ni en la casa (pase a la I4)'] },
+      { id:'I4', type:'number', text:'I4. (Si respondió en grupo B en I1) ¿Cuánto tiempo le toma ir a la fuente de agua, recolectar agua y regresar a su hogar? (ida y vuelta, incluyendo tiempo de espera) (en minutos)' },
+      { id:'I5', type:'radio', text:'I5. (Si respondió en grupo B en I1) ¿Quién va principalmente a esta fuente a buscar agua para su hogar? (seleccione solo una opción)', options:['Hombre adulto (mayor o igual de 18 años)','Mujer adulta (mayor o igual de 18 años)','Niña (< 18 años)','Niño (< 18 años)'] },
+      { id:'I6', type:'checkbox', text:'I6. ¿Cómo se elimina o drena el agua de lluvia? (Puede seleccionar más de una opción)', options:['Canaletas / tubos','Zanja o drenaje abierto (cuneta)','No tiene / nada','Otro'], hasOther: true },
+      { id:'I7', type:'checkbox', text:'I7. ¿A dónde va el agua que usa en casa para lavar platos o para higiene personal? (Puede seleccionar más de una opción)', options:['Desagüe a través de la red pública','Tanque séptico o silo','Río o quebrada','Filtración en el suelo (se echa a la tierra)','Otro'], hasOther: true },
+      { id:'I8', type:'checkbox', text:'I8. ¿Dónde defecan (hacen sus necesidades)? (Puede seleccionar más de una opción)', options:['Letrina / silo','Baño o letrina (conectado a desagüe)','Al aire libre (tierra, monte o río)','Otro'], hasOther: true },
+      { id:'I9', type:'radio', text:'I9. ¿Dónde se lavan las manos los miembros de su hogar con más frecuencia?', options:['Instalación fija observada (lavadero/caño) en la vivienda','Instalación fija observada (lavadero/caño) en el patio/terreno','Objeto móvil observado (balde/jarra/tetera)','No hay lugar para lavarse las manos en la vivienda','Sin permiso para ver'] },
+      { id:'I10', type:'yesno', text:'I10. ¿Hay jabón o detergente disponible en el lugar para lavarse las manos?' }
+    ]},
+    { icon:'⚖️', title:'Sección G. Toma de decisiones de las mujeres', questions:[
+      { id:'G1', type:'radio', text:'G1. Cuando se toman decisiones sobre problemas de salud o enfermedades en su hogar, ¿quién toma usualmente esas decisiones?', options:['El jefe de hogar, esposo o conviviente','La jefa de hogar, esposa o conviviente','Ambos juntos','Otro miembro del hogar','Junto con otra persona dentro de la casa','Junto con otra persona fuera del hogar','Otro'], hasOther: true },
+      { id:'G2', type:'radio', text:'G2. Cuando se toman decisiones con respecto a la generación de ingresos de su hogar, ¿quién es el que normalmente toma la decisión?', options:['Hombre principal o marido','Mujer principal o esposa','Marido y mujer conjuntamente','Alguien más en el hogar','Conjuntamente con alguien más dentro del hogar','Conjuntamente con alguien más fuera del hogar','Alguien fuera del hogar/otro','Mi hogar no participa en la actividad, así que no se toman decisiones'], hasOther: true },
+      { id:'G3', type:'radio', text:'G3. Cuando se toman decisiones sobre gastos menores del hogar (como comida para consumo diario u otras necesidades del hogar), ¿quién toma usualmente la decisión?', options:['El jefe de hogar, esposo o conviviente','La jefa de hogar, esposa o conviviente','Ambos juntos','Otro miembro del hogar','Junto con otra persona dentro de la casa','Junto con otra persona fuera del hogar','Otro'], hasOther: true },
+      { id:'G4', type:'radio', text:'G4. ¿Quién toma usualmente las decisiones sobre el cuidado de la salud de los niños?', options:['El jefe de familia','Cónyuge del jefe de familia','Conjuntamente (jefe de familia y su cónyuge)','Otro'], hasOther: true },
+      { id:'G5', type:'yesno', text:'G5. En los últimos 12 meses, ¿el jefe de este hogar ha usado un teléfono móvil para realizar transacciones financieras (como enviar/recibir dinero, pagar facturas o comprar bienes o servicios)?' }
+    ]},
+    { icon:'😊', title:'Sección E. Bienestar subjetivo', questions:[
+      { id:'E1', type:'radio', text:'E1. Con respecto al consumo de alimentos de su hogar durante el último mes, ¿cuál de las siguientes afirmaciones es verdadera? (Solo una)', options:['No alcanzó / no fue suficiente para las necesidades de la casa','Alcanzó a las justas para las necesidades de la casa','Fue más que suficiente / alcanzó bien y sobró'] },
+      { id:'E2', type:'radio', text:'E2. Con respecto a la vivienda de su hogar durante el último mes, ¿cuál de las siguientes afirmaciones es verdadera? (Solo una, se refiere a la comunidad)', options:['No alcanzó / no fue suficiente para las necesidades de la casa','Alcanzó a las justas para las necesidades de la casa','Fue más que suficiente / alcanzó bien y sobró'] },
+      { id:'E3', type:'radio', text:'E3. Con respecto a la atención de salud de su hogar durante el último mes, ¿cuál de las siguientes afirmaciones es verdadera? (Solo una)', options:['No alcanzó / no fue suficiente para las necesidades de la casa','Alcanzó a las justas para las necesidades de la casa','Fue más que suficiente / alcanzó bien y sobró'] },
+      { id:'E4', type:'radio', text:'E4. ¿Cuál de las siguientes afirmaciones es verdadera con respecto a sus ingresos actuales?', options:['Le permite generar ahorros','Le permite ahorrar solo un poco','Solo cubre los gastos (a las justas)','No es suficiente, necesita usar ahorros','Realmente no es suficiente, necesita pedir prestado'] }
+    ]}
+  ];
+}
+</script>
+</body>
+</html>
