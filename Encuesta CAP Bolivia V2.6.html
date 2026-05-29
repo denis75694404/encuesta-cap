@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -36,6 +35,61 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: 'Sora', sans-serif; background: var(--cream); color: var(--text-dark); scroll-behavior: smooth; }
+
+  /* Estilos para el modal de alerta personalizado */
+  .custom-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 16px;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  .custom-alert-content {
+    background-color: white;
+    border-radius: 16px;
+    padding: 24px 20px 20px 20px;
+    width: 100%;
+    max-width: 320px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: fadeSlide 0.2s ease-out;
+    box-sizing: border-box;
+  }
+  .custom-alert-message {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1f2937;
+    margin-bottom: 24px;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: left;
+    padding: 0 8px;
+  }
+  .custom-alert-button {
+    background-color: var(--green-mid);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s;
+  }
+  .custom-alert-button:active {
+    background-color: var(--green-deep);
+    transform: scale(0.98);
+  }
 
   #app-header {
     background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 100%);
@@ -247,8 +301,7 @@
   .btn-sm-primary { background: var(--green-mid); color: white; }
   .btn-sm-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); }
-  #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--green-deep); color: white; padding: 12px 24px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; white-space: nowrap; pointer-events: none; }
-  #toast.show { opacity: 1; }
+  #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--green-deep); color: white; padding: 12px 16px; border-radius: 14px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; white-space: normal; word-break: break-word; text-align: center; pointer-events: none; width: 85%; max-width: 360px; }  #toast.show { opacity: 1; }
   .hidden { display: none !important; }
   .other-input { margin-top: 6px; margin-left: 30px; width: calc(100% - 30px); display: none; }
   .other-input.visible { display: block; }
@@ -372,6 +425,56 @@
 </div>
 
 <script>
+// ============================================
+// POLYFILL PARA NAVIGATOR.VIBRATE
+// ============================================
+if (!window.navigator.vibrate) {
+    window.navigator.vibrate = function() { return false; };
+}
+
+// ============================================
+// FUNCIÓN DE ALERTA PERSONALIZADA PARA MÓVIL
+// ============================================
+function customAlert(message) {
+    return new Promise((resolve) => {
+        // Eliminar cualquier alerta existente para evitar acumulación
+        const existingAlert = document.querySelector('.custom-alert');
+        if (existingAlert) existingAlert.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-alert';
+        const content = document.createElement('div');
+        content.className = 'custom-alert-content';
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'custom-alert-message';
+        msgDiv.innerText = message;
+        const button = document.createElement('button');
+        button.className = 'custom-alert-button';
+        button.innerText = 'Aceptar';
+        button.onclick = () => {
+            overlay.remove();
+            resolve();
+        };
+        content.appendChild(msgDiv);
+        content.appendChild(button);
+        overlay.appendChild(content);
+        document.body.appendChild(overlay);
+    });
+}
+
+// Reemplazar la función alert nativa con nuestra versión personalizada
+window.alert = function(message) {
+    customAlert(message);
+};
+
+// Función para usar alert nativa si se necesita en algún caso específico
+function showNativeAlert(message) {
+    window.alert = function(msg) {
+        customAlert(msg);
+    };
+    window.alert(message);
+}
+
 let currentSection = 0, answers = {}, editingId = null;
 const TOTAL_SECTIONS = 11;
 const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
@@ -571,6 +674,68 @@ function prevSection() {
     } 
 }
 
+// Función para validar B3 según B2
+function validateB3Value() {
+    const b2Value = answers['B2'];
+    const b3Value = parseInt(answers['B3']);
+    
+    if (b2Value === undefined || b3Value === undefined || isNaN(b3Value)) return { valid: true, message: '' };
+    
+    switch(b2Value) {
+        case 'No tiene educación':
+        case 'No sabe':
+            if (b3Value !== 0) return { valid: false, message: 'Para "No tiene educación" o "No sabe", B3 debe ser igual a 0' };
+            break;
+        case 'Primaria incompleta':
+            if (b3Value >= 6) return { valid: false, message: 'Para "Primaria incompleta", B3 debe ser menor a 6' };
+            break;
+        case 'Primaria completa':
+            if (b3Value !== 6) return { valid: false, message: 'Para "Primaria completa", B3 debe ser igual a 6' };
+            break;
+        case 'Secundaria incompleta':
+            if (b3Value <= 6) return { valid: false, message: 'Para "Secundaria incompleta", B3 debe ser mayor a 6' };
+            break;
+        case 'Secundaria completa':
+            if (b3Value !== 11) return { valid: false, message: 'Para "Secundaria completa", B3 debe ser igual a 11' };
+            break;
+        case 'Superior técnico completo':
+        case 'Superior técnico incompleto':
+        case 'Educación superior completa':
+            if (b3Value <= 11) return { valid: false, message: 'Para educación superior, B3 debe ser mayor a 11' };
+            break;
+        default:
+            return { valid: true, message: '' };
+    }
+    return { valid: true, message: '' };
+}
+
+// Validación en tiempo real para B3
+function validateB3InRealTime() {
+    const validation = validateB3Value();
+    const b3Input = document.querySelector('[data-qid="B3"] input');
+    const b3Block = document.querySelector('[data-qid="B3"]');
+    
+    if (b3Input) {
+        if (!validation.valid) {
+            b3Input.classList.add('field-error');
+            if (b3Block) b3Block.classList.add('has-error');
+            let errorSpan = b3Input.parentElement.querySelector('.b3-error-msg');
+            if (!errorSpan) {
+                errorSpan = document.createElement('div');
+                errorSpan.className = 'error-msg b3-error-msg';
+                b3Input.parentElement.appendChild(errorSpan);
+            }
+            errorSpan.textContent = `⚠️ ${validation.message}`;
+        } else {
+            b3Input.classList.remove('field-error');
+            if (b3Block) b3Block.classList.remove('has-error');
+            const errorSpan = b3Input.parentElement.querySelector('.b3-error-msg');
+            if (errorSpan) errorSpan.remove();
+        }
+    }
+    return validation.valid;
+}
+
 function nextSection() {
     if (currentSection === 1) {
         const a1Value = answers['A1'];
@@ -588,6 +753,45 @@ function nextSection() {
         }
         showErrorAndVibrate('⏰ Por favor espera ' + i1TimeLeft + ' segundos para confirmar tu respuesta antes de continuar');
         return;
+    }
+    
+    // ============================================
+    // VALIDACIÓN DE SUMA DE A4.1 A A4.6
+    // ============================================
+    if (currentSection === 1) {
+        const a4_1 = parseFloat(answers['A4_1']) || 0;
+        const a4_2 = parseFloat(answers['A4_2']) || 0;
+        const a4_3 = parseFloat(answers['A4_3']) || 0;
+        const a4_4 = parseFloat(answers['A4_4']) || 0;
+        const a4_5 = parseFloat(answers['A4_5']) || 0;
+        const a4_6 = parseFloat(answers['A4_6']) || 0;
+        
+        const sumaHombresMujeres = a4_1 + a4_2;
+        const sumaResto = a4_3 + a4_4 + a4_5 + a4_6;
+        
+        if (sumaHombresMujeres !== sumaResto) {
+            const diferencia = Math.abs(sumaHombresMujeres - sumaResto);
+            const mensaje = `❌ La suma de hombres y mujeres (${sumaHombresMujeres}) no coincide con la suma de los demás grupos etarios (${sumaResto}). Falta ${diferencia} persona(s) para que sean iguales.`;
+            showErrorAndVibrate(mensaje);
+            return;
+        }
+    }
+    
+    // ============================================
+    // VALIDACIÓN DE B3 SEGÚN B2
+    // ============================================
+    if (currentSection === 2) {
+        const validation = validateB3Value();
+        if (!validation.valid) {
+            showErrorAndVibrate(`❌ B3 - ${validation.message}`);
+            const b3Block = document.querySelector('[data-qid="B3"]');
+            if (b3Block) {
+                b3Block.classList.add('has-error');
+                const input = b3Block.querySelector('input');
+                if (input) input.classList.add('field-error');
+            }
+            return;
+        }
     }
     
     if (!validateSection()) return;
@@ -694,6 +898,10 @@ function setAnswer(id,val) {
           a1Input.style.borderColor = 'var(--green-light)';
         }
       }
+    }
+    // Validación en tiempo real para B3
+    if (id === 'B3') {
+        setTimeout(() => validateB3InRealTime(), 100);
     }
 }
 
@@ -887,6 +1095,16 @@ function selectRadio(id, val, el) {
     
     const previousValue = answers[id];
     answers[id] = val;
+    
+    // Si es B2 y se selecciona No tiene educación o No sabe, forzar B3 = 0
+    if (id === 'B2') {
+        if (val === 'No tiene educación' || val === 'No sabe') {
+            answers['B3'] = 0;
+            const b3Input = document.querySelector('[data-qid="B3"] input');
+            if (b3Input) b3Input.value = 0;
+        }
+        setTimeout(() => validateB3InRealTime(), 100);
+    }
     
     if (el.closest('.options-list')) {
         el.closest('.options-list').querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
@@ -1452,6 +1670,8 @@ setTimeout(() => {
     // ============================================
     addTooltipToQuestion('A1', 'Si lleva 1 año o menos, la encuesta finalizará automáticamente');
     addTooltipToQuestion('M8', 'Seleccione la práctica principal que usa su familia');
+    addTooltipToQuestion('B2', 'El nivel educativo del jefe de hogar');
+    addTooltipToQuestion('B3', 'Años de estudio desde primaria hasta superior');
     
     // Tooltips para preguntas con límites
     addTooltipToQuestion('C5', 'Seleccione los 2 combustibles principales que usa para cocinar');
@@ -1477,6 +1697,11 @@ setTimeout(() => {
     if (currentSection === 5) {
       enforceMaxSelections('F6', 2);  // Enfermedades: máximo 2
       enforceMaxSelections('F9', 3);  // Síntomas: máximo 3
+    }
+    
+    // Validar B3 en tiempo real después de renderizar
+    if (currentSection === 2) {
+      validateB3InRealTime();
     }
   }
 }, 100);
@@ -1690,7 +1915,7 @@ function buildFullSections() {
     { icon:'💼', title:'Sección B. Situación socioeconómica', questions:[
       { id:'B1', type:'yesno', text:'B1. ¿El jefe de hogar sabe leer y escribir?' },
       { id:'B2', type:'radio', text:'B2. ¿Cuál es el nivel educativo del jefe de hogar?', options:['Primaria completa','Primaria incompleta','Secundaria completa','Secundaria incompleta','Superior técnico completo','Superior técnico incompleto','Educación superior completa','No tiene educación','No sabe'] },
-      { id:'B3', type:'number', text:'B3. ¿Cuántos años fue el jefe de hogar a la escuela? (años)' },
+      { id:'B3', type:'number', text:'B3. ¿Cuántos años ha estudiado el jefe de hogar desde la primaria hasta la educación superior? (años)' },
       { id:'B4', type:'yesno', text:'B4. ¿El jefe de hogar viajó regularmente por trabajo(s) temporal(es) el año pasado?', skip:'Cuando la respuesta es afirmativa continue a B4.1, caso contrario pase a B5' },
       { id:'B4_1', type:'number', text:'B4.1. Si es así, ¿Él o ella cuánto tiempo estuvo en este pueblo el año pasado? (meses)' },
       { id:'B5', type:'checkbox', text:'B5. ¿Participó el jefe de hogar en las siguientes actividades en los últimos 12 meses? (Marque todas las que crea)', options:['Cultivo de alimentos (chacra para consumo)','Cultivo para venta (chacra para negocio)','Cria de animales (ganadería/aves)','Actividades económicas no agrícolas (negocios, tiendas)','Empleo asalariado y jornalero (sueldo fijo o jornal)','Pesca o actividades forestales (madera)','Trabajo doméstico no remunerado','Otro'], hasOther: true },
