@@ -697,12 +697,13 @@ function validateB3Value() {
             if (b3Value <= 6) return { valid: false, message: 'Para "Secundaria incompleta", B3 debe ser mayor a 6' };
             break;
         case 'Secundaria completa':
-            if (b3Value !== 11) return { valid: false, message: 'Para "Secundaria completa", B3 debe ser igual a 11' };
+            if (b3Value !== 12) return { valid: false, message: 'Para "Secundaria completa", B3 debe ser igual a 12' };
             break;
         case 'Superior técnico completo':
         case 'Superior técnico incompleto':
-        case 'Educación superior completa':
-            if (b3Value <= 11) return { valid: false, message: 'Para educación superior, B3 debe ser mayor a 11' };
+        case 'Superior universitaria completa':
+        case 'Superior universitaria incompleta':
+            if (b3Value <= 12) return { valid: false, message: 'Para educación superior, B3 debe ser mayor a 12' };
             break;
         default:
             return { valid: true, message: '' };
@@ -1915,7 +1916,7 @@ function buildFullSections() {
     ]},
     { icon:'💼', title:'Sección B. Situación socioeconómica', questions:[
       { id:'B1', type:'yesno', text:'B1. ¿El jefe de hogar sabe leer y escribir?' },
-      { id:'B2', type:'radio', text:'B2. ¿Cuál es el nivel educativo del jefe de hogar?', options:['Primaria completa','Primaria incompleta','Secundaria completa','Secundaria incompleta','Superior técnico completo','Superior técnico incompleto','Educación superior completa','No tiene educación','No sabe'] },
+      { id:'B2', type:'radio', text:'B2. ¿Cuál es el nivel educativo del jefe de hogar?', options:['Primaria completa','Primaria incompleta','Secundaria completa','Secundaria incompleta','Superior técnico completo','Superior técnico incompleto','Superior universitaria completa','Superior universitaria incompleta','No tiene educación','No sabe'] },
       { id:'B3', type:'number', text:'B3. ¿Cuántos años ha estudiado el jefe de hogar desde la primaria hasta la educación superior? (años)' },
       { id:'B4', type:'yesno', text:'B4. ¿El jefe de hogar viajó regularmente por trabajo(s) temporal(es) el año pasado?', skip:'Cuando la respuesta es afirmativa continue a B4.1, caso contrario pase a B5' },
       { id:'B4_1', type:'number', text:'B4.1. Si es así, ¿Él o ella cuánto tiempo estuvo en este pueblo el año pasado? (meses)' },
