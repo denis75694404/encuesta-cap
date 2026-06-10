@@ -783,15 +783,8 @@ function checkSameSex() {
     const a6 = answers['A6'];
     const a8 = answers['A8'];
     if (a6 && a8 && a6 === a8 && a8 !== 'No tiene cónyuge') {
-        const warningDiv = document.getElementById('same-sex-warning');
-        if (warningDiv) {
-            warningDiv.classList.remove('hidden');
-        }
-    } else {
-        const warningDiv = document.getElementById('same-sex-warning');
-        if (warningDiv) {
-            warningDiv.classList.add('hidden');
-        }
+        showToast('⚠️ Atención: Ha indicado que el sexo del jefe de hogar y el sexo del cónyuge son iguales. Por favor verifique esta información.');
+        vibrateOnError();
     }
 }
 
@@ -1805,14 +1798,9 @@ function renderSection(keepScroll = false) {
       card.appendChild(renderQuestion(q)); 
     }
   }); 
-  if (currentSection === 1) {
-      const sameSexWarning = document.createElement('div');
-      sameSexWarning.id = 'same-sex-warning';
-      sameSexWarning.className = 'warning-message hidden';
-      sameSexWarning.innerHTML = '⚠️ <strong>Atención:</strong> Ha indicado que el sexo del jefe de hogar y el sexo del cónyuge son iguales. Por favor verifique esta información.';
-      card.appendChild(sameSexWarning);
-      checkSameSex();
-  }
+if (currentSection === 1) {
+    checkSameSex();
+}
   if (currentSection === 6) {
     const selectedOptions = [];
     const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
