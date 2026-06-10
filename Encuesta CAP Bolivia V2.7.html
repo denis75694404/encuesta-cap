@@ -36,7 +36,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: 'Sora', sans-serif; background: var(--cream); color: var(--text-dark); scroll-behavior: smooth; }
 
-  /* Estilos para el modal de alerta personalizado */
   .custom-alert {
     position: fixed;
     top: 0;
@@ -245,13 +244,10 @@
   box-shadow: 0 4px 12px rgba(13,74,46,0.2);
 }
 
-/* Móvil: 2 columnas */
 @media (max-width: 550px) {
   .likert-wrap { gap: 8px; }
   .likert-btn { flex: 0 0 calc(50% - 8px); min-width: 0; font-size: 11px; padding: 12px 4px; }
 }
-
-/* Desktop: 4 columnas */
 @media (min-width: 800px) {
   .likert-btn { font-size: 12px; padding: 12px 4px; }
 }
@@ -343,8 +339,35 @@
     color: var(--text-light);
     margin-top: 6px;
   }
+  .radio-group-order {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+  }
+  .order-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--cream);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .order-item label {
+    font-weight: normal;
+    font-size: 13px;
+    margin: 0;
+  }
+  .order-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-family: 'Sora', sans-serif;
+    background: white;
+  }
 
-  /* Validation styles */
   .required-mark {
     background: var(--red);
     color: white;
@@ -364,6 +387,15 @@
   .question-block.has-error .question-label { color: var(--red); }
   .option-item.error-outline { border-color: var(--red) !important; }
   .sent-indicator { font-size: 11px; color: #16a34a; margin-left: 12px; font-weight: normal; }
+  .warning-message {
+    background: #fef3c7;
+    border-left: 4px solid var(--amber);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #92400e;
+  }
   
   #connection-status {
     position: fixed;
@@ -453,21 +485,14 @@
 </div>
 
 <script>
-// ============================================
-// POLYFILL PARA NAVIGATOR.VIBRATE
-// ============================================
 if (!window.navigator.vibrate) {
     window.navigator.vibrate = function() { return false; };
 }
 
-// ============================================
-// FUNCIÓN DE ALERTA PERSONALIZADA PARA MÓVIL
-// ============================================
 function customAlert(message) {
     return new Promise((resolve) => {
         const existingAlert = document.querySelector('.custom-alert');
         if (existingAlert) existingAlert.remove();
-
         const overlay = document.createElement('div');
         overlay.className = 'custom-alert';
         const content = document.createElement('div');
@@ -488,11 +513,9 @@ function customAlert(message) {
         document.body.appendChild(overlay);
     });
 }
-
 window.alert = function(message) {
     customAlert(message);
 };
-
 function showNativeAlert(message) {
     window.alert = function(msg) {
         customAlert(msg);
@@ -504,13 +527,11 @@ let currentSection = 0, answers = {}, editingId = null;
 const TOTAL_SECTIONS = 11;
 const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
 
-// Variables para el timer de I1
 let i1TimerInterval = null;
 let i1TimeLeft = 10;
 let i1Locked = false;
 let i1AnswerSelected = false;
 
-// Configuración Google Sheets
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoF4CS9MwNHZ7xpejCOgaU_j7wTFZ1lfohOV3u46FDSJPP_bh8MjGsDwbUoq5U-IkL/exec";
 
 function vibrateOnError() {
@@ -593,32 +614,23 @@ function loadProgress() {
 async function sendRecordToSheet(record) {
     try {
         let recordCopy = JSON.parse(JSON.stringify(record));
-        
-        const tieneGps = recordCopy.ubicacion_lat && 
-                         recordCopy.ubicacion_lat !== '' && 
-                         recordCopy.ubicacion_lng && 
-                         recordCopy.ubicacion_lng !== '';
-        
+        const tieneGps = recordCopy.ubicacion_lat && recordCopy.ubicacion_lat !== '' && recordCopy.ubicacion_lng && recordCopy.ubicacion_lng !== '';
         if (tieneGps) {
             recordCopy.ubicacion_manual = '';
         } else {
             recordCopy.ubicacion_manual = recordCopy.S0_ubic || '';
         }
-        
         delete recordCopy['ubicacion_precision'];
         delete recordCopy['ubicacion_error'];
         delete recordCopy['ubicacion_direccion'];
         delete recordCopy['S0_ubic'];
-        
         let processed = processRadioOtherAnswers(recordCopy);
         processed = processMultipleChoiceAnswers(processed);
         if (!processed.timestamp) processed.timestamp = getLocalTimestamp();
-        
         const payload = {
             accion: "GUARDAR_REGISTROS",
             registros: [processed]
         };
-        
         await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -643,7 +655,6 @@ async function sendAllRecords() {
         showToast("⚠️ No hay conexión a internet. Conéctate y vuelve a intentar.");
         return;
     }
-    
     showToast(`Enviando ${unsent.length} registro(s)...`);
     let successCount = 0;
     for (let rec of unsent) {
@@ -676,7 +687,6 @@ function acceptConsent() {
     delete answers['ubicacion_precision'];
     delete answers['ubicacion_direccion'];
     delete answers['ubicacion_error'];
-    
     const loaded = loadProgress();
     if (!loaded) {
       obtenerUbicacion();
@@ -697,9 +707,7 @@ function prevSection() {
 function validateB3Value() {
     const b2Value = answers['B2'];
     const b3Value = parseInt(answers['B3']);
-    
     if (b2Value === undefined || b3Value === undefined || isNaN(b3Value)) return { valid: true, message: '' };
-    
     switch(b2Value) {
         case 'No tiene educación':
         case 'No sabe':
@@ -733,7 +741,6 @@ function validateB3InRealTime() {
     const validation = validateB3Value();
     const b3Input = document.querySelector('[data-qid="B3"] input');
     const b3Block = document.querySelector('[data-qid="B3"]');
-    
     if (b3Input) {
         if (!validation.valid) {
             b3Input.classList.add('field-error');
@@ -755,7 +762,6 @@ function validateB3InRealTime() {
     return validation.valid;
 }
 
-// Función para verificar si se seleccionaron exactamente 2 opciones en C5
 function validateC5Selection() {
     const selectedOptions = [];
     const c5Options = ['Leña o carbón', 'Gas', 'Electricidad', 'Otro'];
@@ -767,19 +773,34 @@ function validateC5Selection() {
     if (answers['C5_Otro'] === true && answers['C5_otro'] && answers['C5_otro'].trim() !== '') {
         selectedOptions.push('Otro');
     }
-    
     if (selectedOptions.length !== 2) {
         return { valid: false, count: selectedOptions.length };
     }
     return { valid: true, count: 2 };
 }
 
-// Función para actualizar D1.1 cuando se seleccionan exactamente 3 opciones
-function updateD1OrderInput() {
+function checkSameSex() {
+    const a6 = answers['A6'];
+    const a8 = answers['A8'];
+    if (a6 && a8 && a6 === a8 && a8 !== 'No tiene cónyuge') {
+        const warningDiv = document.getElementById('same-sex-warning');
+        if (warningDiv) {
+            warningDiv.classList.remove('hidden');
+        }
+    } else {
+        const warningDiv = document.getElementById('same-sex-warning');
+        if (warningDiv) {
+            warningDiv.classList.add('hidden');
+        }
+    }
+}
+
+let d1SelectedImpacts = [];
+
+function updateD1OrderUI() {
     const selectedOptions = [];
-    const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
-    
-    for (let opt of d1Options) {
+    const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+    for (let opt of d1OptionsList) {
         if (answers[`D1_${opt}`] === true) {
             selectedOptions.push(opt);
         }
@@ -787,23 +808,64 @@ function updateD1OrderInput() {
     if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
         selectedOptions.push(`Otro: ${answers['D1_otro']}`);
     }
-    
+    d1SelectedImpacts = selectedOptions;
     const orderContainer = document.getElementById('d1-order-container');
     if (orderContainer) {
         if (selectedOptions.length === 3) {
             orderContainer.classList.remove('hidden');
-            const orderText = document.getElementById('d1_order_text');
-            if (orderText && !answers['D1_1']) {
-                const defaultOrder = selectedOptions.map((opt, idx) => `${idx+1}. ${opt}`).join(', ');
-                orderText.placeholder = `Ej: ${defaultOrder}`;
+            const orderRadiosDiv = document.getElementById('d1-order-radios');
+            if (orderRadiosDiv && selectedOptions.length === 3) {
+                orderRadiosDiv.innerHTML = '';
+                const positions = ['Primer impacto (1°)', 'Segundo impacto (2°)', 'Tercer impacto (3°)'];
+                for (let i = 0; i < 3; i++) {
+                    const orderItem = document.createElement('div');
+                    orderItem.className = 'order-item';
+                    orderItem.innerHTML = `
+                        <span style="font-weight:600; min-width:130px;">${positions[i]}:</span>
+                        <select class="order-select" data-position="${i}" onchange="updateD1OrderValue()">
+                            <option value="">Seleccione...</option>
+                            ${selectedOptions.map(opt => `<option value="${opt.replace(/"/g, '&quot;')}">${opt}</option>`).join('')}
+                        </select>
+                    `;
+                    orderRadiosDiv.appendChild(orderItem);
+                }
+                if (answers['D1_order_1'] && answers['D1_order_2'] && answers['D1_order_3']) {
+                    const selects = orderRadiosDiv.querySelectorAll('.order-select');
+                    if (selects[0]) selects[0].value = answers['D1_order_1'] || '';
+                    if (selects[1]) selects[1].value = answers['D1_order_2'] || '';
+                    if (selects[2]) selects[2].value = answers['D1_order_3'] || '';
+                }
             }
         } else {
             orderContainer.classList.add('hidden');
             if (selectedOptions.length !== 3) {
                 answers['D1_1'] = '';
-                const orderText = document.getElementById('d1_order_text');
-                if (orderText) orderText.value = '';
+                answers['D1_order_1'] = '';
+                answers['D1_order_2'] = '';
+                answers['D1_order_3'] = '';
             }
+        }
+    }
+}
+
+function updateD1OrderValue() {
+    const selects = document.querySelectorAll('#d1-order-radios .order-select');
+    if (selects.length === 3) {
+        const order1 = selects[0].value;
+        const order2 = selects[1].value;
+        const order3 = selects[2].value;
+        if (order1 && order2 && order3) {
+            const orderText = `1. ${order1}, 2. ${order2}, 3. ${order3}`;
+            answers['D1_1'] = orderText;
+            answers['D1_order_1'] = order1;
+            answers['D1_order_2'] = order2;
+            answers['D1_order_3'] = order3;
+            const orderTextInput = document.getElementById('d1_order_text');
+            if (orderTextInput) orderTextInput.value = orderText;
+        } else {
+            answers['D1_1'] = '';
+            const orderTextInput = document.getElementById('d1_order_text');
+            if (orderTextInput) orderTextInput.value = '';
         }
     }
 }
@@ -817,7 +879,6 @@ function nextSection() {
             return;
         }
     }
-    
     if (currentSection === 8 && i1AnswerSelected && !i1Locked) {
         if (answers['I1_1'] && answers['I1_2']) {
             showErrorAndVibrate('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
@@ -826,7 +887,6 @@ function nextSection() {
         showErrorAndVibrate('⏰ Por favor espera ' + i1TimeLeft + ' segundos para confirmar tu respuesta antes de continuar');
         return;
     }
-    
     if (currentSection === 1) {
         const a4_1 = parseFloat(answers['A4_1']) || 0;
         const a4_2 = parseFloat(answers['A4_2']) || 0;
@@ -834,10 +894,8 @@ function nextSection() {
         const a4_4 = parseFloat(answers['A4_4']) || 0;
         const a4_5 = parseFloat(answers['A4_5']) || 0;
         const a4_6 = parseFloat(answers['A4_6']) || 0;
-        
         const sumaHombresMujeres = a4_1 + a4_2;
         const sumaResto = a4_3 + a4_4 + a4_5 + a4_6;
-        
         if (sumaHombresMujeres !== sumaResto) {
             const diferencia = Math.abs(sumaHombresMujeres - sumaResto);
             const mensaje = `❌ La suma de hombres y mujeres (${sumaHombresMujeres}) no coincide con la suma de los demás grupos etarios (${sumaResto}). Falta ${diferencia} persona(s) para que sean iguales.`;
@@ -845,7 +903,6 @@ function nextSection() {
             return;
         }
     }
-    
     if (currentSection === 2) {
         const validation = validateB3Value();
         if (!validation.valid) {
@@ -859,8 +916,6 @@ function nextSection() {
             return;
         }
     }
-    
-    // Validación para C5 (máximo 2 opciones)
     if (currentSection === 3) {
         const c5Validation = validateC5Selection();
         if (!c5Validation.valid) {
@@ -872,8 +927,6 @@ function nextSection() {
             return;
         }
     }
-    
-    // Validación para D1 (máximo 3 opciones)
     if (currentSection === 6) {
         let selectedCount = 0;
         const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
@@ -881,7 +934,6 @@ function nextSection() {
             if (answers[`D1_${opt}`] === true) selectedCount++;
         }
         if (answers['D1_Otro'] === true) selectedCount++;
-        
         if (selectedCount === 0) {
             showErrorAndVibrate('⚠️ Debe seleccionar al menos un impacto del cambio climático');
             return;
@@ -890,25 +942,14 @@ function nextSection() {
             showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 3 impactos del cambio climático');
             return;
         }
-        
         if (selectedCount === 3) {
             const ordenValue = answers['D1_1'];
             if (!ordenValue || ordenValue.trim() === '') {
                 showErrorAndVibrate('⚠️ Por favor ordene los 3 impactos seleccionados (1°, 2°, 3°)');
-                const orderInput = document.getElementById('d1_order_text');
-                if (orderInput) {
-                    orderInput.classList.add('field-error');
-                    orderInput.focus();
-                }
                 return;
-            } else {
-                const orderInput = document.getElementById('d1_order_text');
-                if (orderInput) orderInput.classList.remove('field-error');
             }
         }
     }
-    
-    // Validación para H14: si responde Sí, debe responder H15.1
     if (currentSection === 7) {
         if (answers['H14'] === 'Sí') {
             const h15_1Value = answers['H15_1'];
@@ -918,8 +959,6 @@ function nextSection() {
             }
         }
     }
-    
-    // Validación para I1: guardar el valor de "Otro" especificado
     if (currentSection === 8) {
         if (answers['I1_1'] === 'Otro' && answers['I1_1_otro'] && answers['I1_1_otro'].trim() !== '') {
             answers['I1_1'] = `Otro: ${answers['I1_1_otro'].trim()}`;
@@ -928,8 +967,6 @@ function nextSection() {
             answers['I1_2'] = `Otro: ${answers['I1_2_otro'].trim()}`;
         }
     }
-    
-    // Validación de "Otro" campos
     const sections = buildFullSections();
     const sec = sections[currentSection];
     if (sec) {
@@ -967,9 +1004,7 @@ function nextSection() {
             }
         }
     }
-    
     if (!validateSection()) return;
-    
     if (currentSection < TOTAL_SECTIONS - 1) {
         currentSection++;
         renderSection();
@@ -986,36 +1021,29 @@ function returnToConsent() {
         partialAnswers.id = Date.now().toString();
         partialAnswers.encuesta_finalizada_temprano = true;
         partialAnswers.razon_finalizacion = 'Tiempo de residencia ≤ 1 año (A1)';
-        
         let records = getRecords();
         records.push(partialAnswers);
         localStorage.setItem('cap_records', JSON.stringify(records));
     } catch(e) {
         console.log('Error guardando respuesta parcial:', e);
     }
-    
     answers = {};
     currentSection = 0;
     editingId = null;
     resetI1TimerGlobal();
     localStorage.removeItem('survey_progress');
-    
     const consentScreen = document.getElementById('consent-screen');
     const mainApp = document.getElementById('main-app');
     const completeScreen = document.getElementById('complete-screen');
     const adminScreen = document.getElementById('admin-screen');
     const tabBar = document.getElementById('tab-bar');
-    
     if (mainApp) mainApp.classList.add('hidden');
     if (completeScreen) completeScreen.classList.add('hidden');
     if (adminScreen) adminScreen.classList.add('hidden');
     if (tabBar) tabBar.style.display = 'none';
-    
     if (consentScreen) consentScreen.classList.remove('hidden');
-    
     const existingMsg = document.querySelector('.early-exit-message');
     if (existingMsg) existingMsg.remove();
-    
     const consentBox = document.querySelector('.consent-box');
     if (consentBox && !document.querySelector('.early-exit-message')) {
         const msgDiv = document.createElement('div');
@@ -1024,7 +1052,6 @@ function returnToConsent() {
         msgDiv.innerHTML = '⚠️ <strong>Importante:</strong> La encuesta anterior finalizó porque el tiempo de residencia era ≤ 1 año. Por favor, avance a la siguiente vivienda según el protocolo (salto de k=5 casas).';
         consentBox.appendChild(msgDiv);
     }
-    
     showToast('Volviendo a pantalla de consentimiento...');
 }
 
@@ -1053,6 +1080,9 @@ function setAnswer(id,val) {
         if (inputElement && val.trim() !== '') {
             inputElement.classList.remove('field-error');
         }
+        if (id === 'D1_otro') {
+            setTimeout(() => updateD1OrderUI(), 50);
+        }
     }
     if (id === 'S0_email' && val !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1080,8 +1110,8 @@ function setAnswer(id,val) {
     if (id === 'B3') {
         setTimeout(() => validateB3InRealTime(), 100);
     }
-    if (id === 'D1_1') {
-        // Ya se guarda el valor
+    if (id === 'A6' || id === 'A8') {
+        checkSameSex();
     }
 }
 
@@ -1091,7 +1121,6 @@ function enforceMaxSelections(questionId, maxSelections) {
   const checkboxes = questionBlock.querySelectorAll('input[type="checkbox"]');
   let selectedCount = 0;
   checkboxes.forEach(cb => { if (cb.checked) selectedCount++; });
-  
   if (selectedCount >= maxSelections) {
     checkboxes.forEach(cb => {
       if (!cb.checked) {
@@ -1117,11 +1146,8 @@ function selectI1(id, val, el) {
         showErrorAndVibrate('⏰ El tiempo para cambiar de opción ha finalizado');
         return;
     }
-    
     if (answers[id] === val) return;
-    
     answers[id] = val;
-    
     if (id === 'I1_1') {
         answers['I1_2'] = undefined;
         const i1_2Block = document.querySelector('[data-qid="I1_2"]');
@@ -1143,14 +1169,12 @@ function selectI1(id, val, el) {
             });
         }
     }
-    
     if (el.closest('.options-list')) {
         el.closest('.options-list').querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
     }
     el.classList.add('selected');
     const radio = el.querySelector('input');
     if (radio) radio.checked = true;
-    
     if (i1AnswerSelected) {
         resetI1Timer();
     } else {
@@ -1161,28 +1185,22 @@ function selectI1(id, val, el) {
 
 function startI1Timer() {
     if (i1TimerInterval) clearInterval(i1TimerInterval);
-    
     i1TimeLeft = 10;
     updateTimerDisplay();
-    
     const timerContainer = document.getElementById('i1-timer-container');
     if (timerContainer && !timerContainer.querySelector('.timer-bar')) {
         const progressBar = document.createElement('div');
         progressBar.className = 'timer-bar';
         timerContainer.appendChild(progressBar);
     }
-    
     const bar = document.querySelector('.timer-bar');
     if (bar) bar.style.width = '100%';
-    
     i1TimerInterval = setInterval(() => {
         if (i1TimeLeft > 0) {
             i1TimeLeft--;
             updateTimerDisplay();
-            
             const barEl = document.querySelector('.timer-bar');
             if (barEl) barEl.style.width = `${(i1TimeLeft / 10) * 100}%`;
-            
             if (i1TimeLeft === 0) {
                 clearInterval(i1TimerInterval);
                 i1TimerInterval = null;
@@ -1240,7 +1258,6 @@ function lockI1Options() {
     const selectedA = answers['I1_1'];
     const selectedB = answers['I1_2'];
     const selectedGroup = selectedA ? 'A' : (selectedB ? 'B' : null);
-    
     if (i1_1Block) {
         const options = i1_1Block.querySelectorAll('.option-item');
         options.forEach(opt => {
@@ -1271,10 +1288,8 @@ function selectRadio(id, val, el) {
         renderSection(true);
         return;
     }
-    
     const previousValue = answers[id];
     answers[id] = val;
-    
     if (id === 'B2') {
         if (val === 'No tiene educación' || val === 'No sabe') {
             answers['B3'] = 0;
@@ -1283,12 +1298,10 @@ function selectRadio(id, val, el) {
         }
         setTimeout(() => validateB3InRealTime(), 100);
     }
-    
     if (el.closest('.options-list')) {
         el.closest('.options-list').querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
     }
     el.classList.add('selected');
-    
     const otherInput = document.getElementById(`other_input_${id}`);
     if (otherInput) {
         if (val === 'Otro') {
@@ -1305,21 +1318,21 @@ function selectRadio(id, val, el) {
             otherInput.value = '';
         }
     }
-    
     const conditionalParents = ['A3', 'A8', 'B4', 'B6', 'B7', 'B13_1_1', 'B13_2_1', 'B13_3_1', 
                             'C3', 'M3', 'F5', 'F7_1', 'F7_2', 'F17', 'H1', 'H5', 'H14',
                             'H6_1', 'H7_1', 'H8_1', 'H9_1', 'H10_1', 'H11_1', 'H12_1', 'H13_1',
                             'H15_1', 'H16_1', 'H17_1', 'H18_1', 'H19_1', 'H20_1', 'I1_1', 'I1_2', 'I3',
                             'H15_3', 'H16_3', 'H17_3', 'H18_3', 'H19_3', 'H20_3'];
-
     if (conditionalParents.includes(id) && previousValue !== val) {
         renderSection(true);
+    }
+    if (id === 'A6' || id === 'A8') {
+        checkSameSex();
     }
 }
 
 function toggleCheck(id, val, el) { 
   let key = `${id}_${val}`;
-  
   if (id === 'F9' && val === 'Ninguno (pasar a la F14)') {
     const todasLasOpciones = ['Fiebre (calentura)', 'Sudor frío', 'Escalofríos (chucho)', 
                                'Diarrea', 'Tos', 'Dolor muscular', 'Mareos', 'Otro'];
@@ -1339,7 +1352,6 @@ function toggleCheck(id, val, el) {
       }
     }
   }
-  
   if (id === 'F9' && val !== 'Ninguno (pasar a la F14)') {
     const ningunoKey = `${id}_Ninguno (pasar a la F14)`;
     if (answers[ningunoKey] === true) {
@@ -1355,12 +1367,10 @@ function toggleCheck(id, val, el) {
       });
     }
   }
-  
   answers[key] = !answers[key]; 
   el.classList.toggle('selected', !!answers[key]); 
   let chk = el.querySelector('input'); 
   if (chk) chk.checked = !!answers[key];
-  
   if (val === 'Otro') {
     const otherInput = document.getElementById(`other_input_${id}`);
     if (otherInput) {
@@ -1379,30 +1389,24 @@ function toggleCheck(id, val, el) {
       }
     }
   }
-  
   if (id === 'C5') {
     setTimeout(() => enforceMaxSelections('C5', 2), 50);
   }
-  
   if (id === 'D1') {
     setTimeout(() => {
         enforceMaxSelections('D1', 3);
-        updateD1OrderInput();
+        updateD1OrderUI();
     }, 50);
   }
-  
   if (id === 'F6') {
     setTimeout(() => enforceMaxSelections('F6', 2), 50);
   }
-  
   if (id === 'F9') {
     setTimeout(() => enforceMaxSelections('F9', 3), 50);
   }
-  
   if (id === 'F9') {
     renderSection(true);
   }
-  
   if (id === 'D1') {
     renderSection(true);
   }
@@ -1430,21 +1434,17 @@ function updateSectionProgress() {
   const sections = buildFullSections();
   const sec = sections[currentSection];
   if (!sec) return;
-  
   let totalQuestions = 0;
   let answeredQuestions = 0;
-  
   sec.questions.forEach(q => {
     if (q.type === 'subtitle') return;
     if (!isVisible(q.id)) return;
     totalQuestions++;
     if (hasAnswered({ id: q.id, type: q.type })) answeredQuestions++;
   });
-  
   const progressText = `${answeredQuestions}/${totalQuestions} respondidas`;
   let progressElem = document.querySelector('.section-progress');
   const header = document.querySelector('.section-title');
-  
   if (progressElem) {
     progressElem.textContent = progressText;
   } else if (header && !document.querySelector('.section-progress')) {
@@ -1571,7 +1571,6 @@ function isRequiredField(id, type) {
     'H18_1','H18_2','H18_3','H18_4', 'H19_1','H19_2','H19_3','H19_4', 'H20_1','H20_2','H20_3','H20_4',
     'I2','I3','I4','I5','A7',
   ]);
-  
   const explicit = new Set([
     'S0_enc','S0_email','S0_cod','S0_zona','S0_dist',
     'A1','A2','A3', 'A4_1','A4_2','A4_3','A4_4','A4_5','A4_6',
@@ -1582,15 +1581,13 @@ function isRequiredField(id, type) {
     'M1','M2','M3','M6','M7','M8','M9_1','M9_2','M9_3', 'F1','F2','F3','F4','F5','F15','F16_1','F16_2','F17',
     'D1','D2','D3','D4','D5','D6','D7','D8', 'H1','H3','H4','H5','H14',
     'I6','I7','I8','I9','I10', 'G1','G2','G3','G4','G5', 'E1','E2','E3','E4',
-    'B5', 'B8', 'C1'
+    'B5', 'B8', 'C1', 'D1_1'
   ]);
-
   const conditionalRequired = new Set([
     'A3_1', 'B4_1', 'B6_1', 'B7_1', 'B13_1_2','B13_2_2','B13_3_2',
     'C3_1', 'M4','M5', 'F6','F7_1', 'F7_2','F8','F9','F10','F11','F12','F13',
     'F18','F19', 'H2','D1_1'
   ]);
-
   if (explicit.has(id)) return true;
   if (conditionalRequired.has(id) && isVisible(id)) return true;
   if (id === 'I1_1') return !answers['I1_2'];
@@ -1611,14 +1608,12 @@ function validateSection() {
   const sections = buildFullSections();
   const sec = sections[currentSection];
   if (!sec) return true;
-
   if (currentSection === 8) {
     if (answers['I1_1'] && answers['I1_2']) {
       showErrorAndVibrate('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
       return false;
     }
   }
-
   const errors = [];
   for (const q of sec.questions) {
     if (q.type === 'subtitle') continue;
@@ -1626,17 +1621,14 @@ function validateSection() {
     if (!isRequiredField(q.id, q.type)) continue;
     if (!hasAnswered(q)) errors.push(q);
   }
-
   if (errors.length > 0) {
     let container = document.getElementById('main');
     let existing = container.querySelector('.validation-summary');
     if (existing) existing.remove();
-
     let summary = document.createElement('div');
     summary.className = 'validation-summary';
     summary.innerHTML = `⚠️ Por favor responde ${errors.length} pregunta(s) obligatoria(s) antes de continuar.`;
     container.insertBefore(summary, container.firstChild);
-
     errors.forEach(q => {
       const block = container.querySelector(`[data-qid="${q.id}"]`);
       if (block) {
@@ -1655,7 +1647,6 @@ function validateSection() {
         }
       }
     });
-
     const firstErr = container.querySelector('.has-error');
     if (firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
     vibrateOnError();
@@ -1672,12 +1663,10 @@ function obtenerUbicacion() {
                 const lng = posicion.coords.longitude;
                 const precision = posicion.coords.accuracy;
                 const urlGeo = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-                
                 answers['ubicacion_lat'] = lat;
                 answers['ubicacion_lng'] = lng;
                 answers['ubicacion_precision'] = precision;
                 delete answers['ubicacion_manual'];
-                
                 fetch(urlGeo)
                     .then(resp => resp.json())
                     .then(data => {
@@ -1727,7 +1716,6 @@ function renderQuestion(q){
   let block=document.createElement('div'); 
   block.className='question-block';
   block.setAttribute('data-qid', q.id);
-  
   const isReq = isRequiredField(q.id, q.type);
   let html=`<div class="question-label">${q.text}${isReq ? '<span class="required-mark">*</span>' : ''}</div>`;
   if(q.hint) html+=`<div class="hint">ℹ️ ${q.hint}</div>`;
@@ -1774,7 +1762,6 @@ function renderQuestion(q){
 
 function renderSection(keepScroll = false) { 
   const scrollY = keepScroll ? window.scrollY : 0;
-  
   updateProgress(); 
   let el = document.getElementById('main'); 
   el.innerHTML = ''; 
@@ -1784,7 +1771,6 @@ function renderSection(keepScroll = false) {
   let card = document.createElement('div'); 
   card.className = 'section-card'; 
   card.innerHTML = `<div class="section-title"><span class="section-icon">${sec.icon}</span>${sec.title}</div>`; 
-  
   if(currentSection === 8 && !i1Locked && (answers['I1_1'] || answers['I1_2'] || i1AnswerSelected || i1TimerInterval)) {
     const timerDiv = document.createElement('div');
     timerDiv.className = 'timer-info';
@@ -1796,7 +1782,6 @@ function renderSection(keepScroll = false) {
     `;
     card.appendChild(timerDiv);
   }
-  
   if(currentSection === 0 && (answers['ubicacion_lat'] || answers['ubicacion_error'])) {
       let geoDiv = document.createElement('div');
       geoDiv.className = 'geo-info';
@@ -1807,7 +1792,6 @@ function renderSection(keepScroll = false) {
       }
       card.appendChild(geoDiv);
   }
-  
   sec.questions.forEach(q => { 
     if(q.type === 'subtitle') { 
       if(!isVisible(q.id)) return;
@@ -1821,8 +1805,14 @@ function renderSection(keepScroll = false) {
       card.appendChild(renderQuestion(q)); 
     }
   }); 
-  
-  // Agregar el contenedor para orden de D1 si es la sección D
+  if (currentSection === 1) {
+      const sameSexWarning = document.createElement('div');
+      sameSexWarning.id = 'same-sex-warning';
+      sameSexWarning.className = 'warning-message hidden';
+      sameSexWarning.innerHTML = '⚠️ <strong>Atención:</strong> Ha indicado que el sexo del jefe de hogar y el sexo del cónyuge son iguales. Por favor verifique esta información.';
+      card.appendChild(sameSexWarning);
+      checkSameSex();
+  }
   if (currentSection === 6) {
     const selectedOptions = [];
     const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
@@ -1834,33 +1824,47 @@ function renderSection(keepScroll = false) {
     if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
         selectedOptions.push(`Otro: ${answers['D1_otro']}`);
     }
-    
+    const orderContainer = document.createElement('div');
+    orderContainer.id = 'd1-order-container';
+    orderContainer.className = 'order-input-container hidden';
+    orderContainer.innerHTML = `
+      <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°): <span class="required-mark">*</span></label>
+      <div id="d1-order-radios" class="radio-group-order"></div>
+      <input type="hidden" id="d1_order_text" value="${escHtml(answers['D1_1'] || '')}">
+      <div class="order-hint">Seleccione el orden de importancia para cada impacto. Debe seleccionar los tres.</div>
+    `;
+    card.appendChild(orderContainer);
     if (selectedOptions.length === 3) {
-      const orderContainer = document.createElement('div');
-      orderContainer.id = 'd1-order-container';
-      orderContainer.className = 'order-input-container';
-      const defaultOrder = selectedOptions.map((opt, idx) => `${idx+1}. ${opt}`).join(', ');
-      const currentValue = answers['D1_1'] || '';
-      orderContainer.innerHTML = `
-        <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°): <span class="required-mark">*</span></label>
-        <input type="text" id="d1_order_text" class="order-input" placeholder="Ej: ${defaultOrder}" value="${escHtml(currentValue)}" oninput="setAnswer('D1_1', this.value)">
-        <div class="order-hint">Escriba en orden de importancia, separados por comas. Ejemplo: "1. Sequía, 2. Inundaciones, 3. Ola de calor"</div>
-      `;
-      card.appendChild(orderContainer);
-    } else if (selectedOptions.length !== 3) {
-      const orderContainer = document.createElement('div');
-      orderContainer.id = 'd1-order-container';
-      orderContainer.className = 'order-input-container hidden';
-      orderContainer.innerHTML = `
-        <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°):</label>
-        <input type="text" id="d1_order_text" class="order-input" placeholder="Seleccione exactamente 3 opciones para ordenar">
-      `;
-      card.appendChild(orderContainer);
+      setTimeout(() => {
+        const container = document.getElementById('d1-order-container');
+        if (container) container.classList.remove('hidden');
+        const orderRadiosDiv = document.getElementById('d1-order-radios');
+        if (orderRadiosDiv && selectedOptions.length === 3) {
+          orderRadiosDiv.innerHTML = '';
+          const positions = ['Primer impacto (1°)', 'Segundo impacto (2°)', 'Tercer impacto (3°)'];
+          for (let i = 0; i < 3; i++) {
+            const orderItem = document.createElement('div');
+            orderItem.className = 'order-item';
+            orderItem.innerHTML = `
+              <span style="font-weight:600; min-width:130px;">${positions[i]}:</span>
+              <select class="order-select" data-position="${i}" onchange="updateD1OrderValue()">
+                <option value="">Seleccione...</option>
+                ${selectedOptions.map(opt => `<option value="${opt.replace(/"/g, '&quot;')}">${opt}</option>`).join('')}
+              </select>
+            `;
+            orderRadiosDiv.appendChild(orderItem);
+          }
+          if (answers['D1_order_1'] && answers['D1_order_2'] && answers['D1_order_3']) {
+            const selects = orderRadiosDiv.querySelectorAll('.order-select');
+            if (selects[0]) selects[0].value = answers['D1_order_1'] || '';
+            if (selects[1]) selects[1].value = answers['D1_order_2'] || '';
+            if (selects[2]) selects[2].value = answers['D1_order_3'] || '';
+          }
+        }
+      }, 50);
     }
   }
-  
   el.appendChild(card); 
-  
 setTimeout(() => {
   const sectionsList = buildFullSections();
   const currentSec = sectionsList[currentSection];
@@ -1882,7 +1886,6 @@ setTimeout(() => {
       }
     });
     updateSectionProgress();
-    
     addTooltipToQuestion('A1', 'Si lleva 1 año o menos, la encuesta finalizará automáticamente');
     addTooltipToQuestion('M8', 'Seleccione la práctica principal que usa su familia');
     addTooltipToQuestion('B2', 'El nivel educativo del jefe de hogar');
@@ -1891,29 +1894,26 @@ setTimeout(() => {
     addTooltipToQuestion('D1', 'Seleccione máximo 3 impactos del cambio climático. Si selecciona 3, deberá ordenarlos');
     addTooltipToQuestion('F6', 'Seleccione hasta 2 enfermedades o lesiones principales');
     addTooltipToQuestion('F9', 'Seleccione máximo 3 síntomas. "Ninguno" excluye las demás opciones');
-    
     if (currentSection === 3) {
       enforceMaxSelections('C5', 2);
     }
-    
     if (currentSection === 6) {
       enforceMaxSelections('D1', 3);
-      updateD1OrderInput();
+      updateD1OrderUI();
     }
-    
     if (currentSection === 5) {
       enforceMaxSelections('F6', 2);
       enforceMaxSelections('F9', 3);
     }
-    
     if (currentSection === 2) {
       validateB3InRealTime();
     }
+    if (currentSection === 1) {
+      checkSameSex();
+    }
   }
 }, 100);
-  
   if (currentSection === 8 && i1Locked) lockI1Options();
-  
   if (!keepScroll) window.scrollTo({top: 0, behavior: 'smooth'});
   else window.scrollTo(0, scrollY);
 }
@@ -2180,7 +2180,7 @@ function buildFullSections() {
       { id:'C10_8', type:'yesno', text:'C10.8. Carro o camión' }
     ]},
     { icon:'🦟', title:'Sección M. Comportamiento de prevención de la malaria y el dengue', questions:[
-      { id:'M1', type:'radio', text:'M1. ¿Dónde te pican más los mosquitos? (Por favor, seleccione una opción)', options:['Principalmente adentro, dentro de su casa','Principalmente adentro, en otro lugar que no es su casa (ej. trabajo, oficina, escuela, etc.)','Principalmente afuera, alrededor de su casa (ej. huerta, patio, balcón o vecindario inmediato)','Principalmente afuera, lejos de su casa (ej. en el monte, orilla del río, caminos, chacra u otros espacios públicos)','Igual adentro y afuera, o en varios lugares sin un patrón claro','Otro'], hasOther: true },
+      { id:'M1', type:'radio', text:'M1. ¿En qué parte de su vivienda o entorno le pican más los mosquitos? (Por favor, seleccione una opción)', options:['Principalmente adentro, dentro de su casa','Principalmente adentro, en otro lugar que no es su casa (ej. trabajo, oficina, escuela, etc.)','Principalmente afuera, alrededor de su casa (ej. huerta, patio, balcón o vecindario inmediato)','Principalmente afuera, lejos de su casa (ej. en el monte, orilla del río, caminos, chacra u otros espacios públicos)','Igual adentro y afuera, o en varios lugares sin un patrón claro','Otro'], hasOther: true },
       { id:'M2', type:'yesno', text:'M2. ¿Considera necesario fumigar dentro de la casa o recibir insecticida (abate) como parte de las prácticas para prevenir el contagio de malaria o dengue?' },
       { id:'M3', type:'yesno', text:'M3. ¿Permitió que fumigaran su casa o recibió el insecticida (abate) en casa?', skip:'Cuando la respuesta es afirmativa continue a M5, caso contrario pase a M4' },
       { id:'M4', type:'radio', text:'M4. Si la respuesta anterior fue no, ¿cuál fue la razón principal por la que no se fumigó su casa o no recibió abate (insecticida)?', options:['El equipo de fumigación no vino','No había nadie en casa','Daña las paredes','Es malo para nuestra salud, incluyendo mascotas, plantas y otros','No queríamos que vieran nuestra casa','Fumigar no sirve de nada','La fumigación es molesta / huele feo','No respetan mi cultura o forma de ser','No sé','Otro'], hasOther: true },
@@ -2220,7 +2220,6 @@ function buildFullSections() {
     ]},
     { icon:'🌡️', title:'Sección D. Impacto y percepciones del clima', questions:[
       { id:'D1', type:'checkbox', text:'D1. Durante los últimos dos años, ¿su hogar fue afectado por los impactos del cambio climático, tales como: ? (Puede marcar hasta tres opciones)', options:['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios', 'Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola','Otro'], hasOther: true },
-      { id:'D1_1', type:'text', text:'', placeholder:'', hidden: true },
       { id:'D2', type:'likert5b', text:'D2. ¿Ha escuchado sobre cambio climático y calentamiento global?' },
       { id:'D3', type:'likert5b', text:'D3. En los últimos 2 años, he notado que las lluvias fuertes favorecen la presencia de zancudos (mosquitos)' },
       { id:'D4', type:'likert5b', text:'D4. En los últimos 2 años, he notado que el cambio climático afecta el brote de malaria o dengue' },
