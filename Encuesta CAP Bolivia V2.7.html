@@ -251,7 +251,7 @@
   .likert-btn { flex: 0 0 calc(50% - 8px); min-width: 0; font-size: 11px; padding: 12px 4px; }
 }
 
-/* Desktop: 5 columnas */
+/* Desktop: 4 columnas */
 @media (min-width: 800px) {
   .likert-btn { font-size: 12px; padding: 12px 4px; }
 }
@@ -314,6 +314,34 @@
     width: 100%;
     border-radius: 2px;
     transition: width 0.1s linear;
+  }
+  .order-input-container {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f0f9f4;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--green-mid);
+  }
+  .order-input-container label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green-deep);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .order-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    background: white;
+  }
+  .order-hint {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 6px;
   }
 
   /* Validation styles */
@@ -437,7 +465,6 @@ if (!window.navigator.vibrate) {
 // ============================================
 function customAlert(message) {
     return new Promise((resolve) => {
-        // Eliminar cualquier alerta existente para evitar acumulación
         const existingAlert = document.querySelector('.custom-alert');
         if (existingAlert) existingAlert.remove();
 
@@ -462,12 +489,10 @@ function customAlert(message) {
     });
 }
 
-// Reemplazar la función alert nativa con nuestra versión personalizada
 window.alert = function(message) {
     customAlert(message);
 };
 
-// Función para usar alert nativa si se necesita en algún caso específico
 function showNativeAlert(message) {
     window.alert = function(msg) {
         customAlert(msg);
@@ -488,7 +513,6 @@ let i1AnswerSelected = false;
 // Configuración Google Sheets
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoF4CS9MwNHZ7xpejCOgaU_j7wTFZ1lfohOV3u46FDSJPP_bh8MjGsDwbUoq5U-IkL/exec";
 
-// Función para vibrar en error
 function vibrateOnError() {
   if (window.navigator && window.navigator.vibrate) {
     window.navigator.vibrate(200);
@@ -500,7 +524,6 @@ function showErrorAndVibrate(message) {
   vibrateOnError();
 }
 
-// Estado de conexión
 function updateConnectionStatus() {
   let statusDiv = document.getElementById('connection-status');
   if (!statusDiv) {
@@ -522,7 +545,6 @@ window.addEventListener('offline', () => {
   showToast('Sin conexión - Los datos se guardarán localmente');
 });
 
-// Atajos de teclado
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
@@ -541,7 +563,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Guardar progreso
 function saveProgress() {
   const progress = {
     currentSection: currentSection,
@@ -656,7 +677,6 @@ function acceptConsent() {
     delete answers['ubicacion_direccion'];
     delete answers['ubicacion_error'];
     
-    // Intentar cargar progreso guardado
     const loaded = loadProgress();
     if (!loaded) {
       obtenerUbicacion();
@@ -674,7 +694,6 @@ function prevSection() {
     } 
 }
 
-// Función para validar B3 según B2
 function validateB3Value() {
     const b2Value = answers['B2'];
     const b3Value = parseInt(answers['B3']);
@@ -710,7 +729,6 @@ function validateB3Value() {
     return { valid: true, message: '' };
 }
 
-// Validación en tiempo real para B3
 function validateB3InRealTime() {
     const validation = validateB3Value();
     const b3Input = document.querySelector('[data-qid="B3"] input');
@@ -737,6 +755,59 @@ function validateB3InRealTime() {
     return validation.valid;
 }
 
+// Función para verificar si se seleccionaron exactamente 2 opciones en C5
+function validateC5Selection() {
+    const selectedOptions = [];
+    const c5Options = ['Leña o carbón', 'Gas', 'Electricidad', 'Otro'];
+    for (let opt of c5Options) {
+        if (answers[`C5_${opt}`] === true) {
+            selectedOptions.push(opt);
+        }
+    }
+    if (answers['C5_Otro'] === true && answers['C5_otro'] && answers['C5_otro'].trim() !== '') {
+        selectedOptions.push('Otro');
+    }
+    
+    if (selectedOptions.length !== 2) {
+        return { valid: false, count: selectedOptions.length };
+    }
+    return { valid: true, count: 2 };
+}
+
+// Función para actualizar D1.1 cuando se seleccionan exactamente 3 opciones
+function updateD1OrderInput() {
+    const selectedOptions = [];
+    const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+    
+    for (let opt of d1Options) {
+        if (answers[`D1_${opt}`] === true) {
+            selectedOptions.push(opt);
+        }
+    }
+    if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
+        selectedOptions.push(`Otro: ${answers['D1_otro']}`);
+    }
+    
+    const orderContainer = document.getElementById('d1-order-container');
+    if (orderContainer) {
+        if (selectedOptions.length === 3) {
+            orderContainer.classList.remove('hidden');
+            const orderText = document.getElementById('d1_order_text');
+            if (orderText && !answers['D1_1']) {
+                const defaultOrder = selectedOptions.map((opt, idx) => `${idx+1}. ${opt}`).join(', ');
+                orderText.placeholder = `Ej: ${defaultOrder}`;
+            }
+        } else {
+            orderContainer.classList.add('hidden');
+            if (selectedOptions.length !== 3) {
+                answers['D1_1'] = '';
+                const orderText = document.getElementById('d1_order_text');
+                if (orderText) orderText.value = '';
+            }
+        }
+    }
+}
+
 function nextSection() {
     if (currentSection === 1) {
         const a1Value = answers['A1'];
@@ -756,9 +827,6 @@ function nextSection() {
         return;
     }
     
-    // ============================================
-    // VALIDACIÓN DE SUMA DE A4.1 A A4.6
-    // ============================================
     if (currentSection === 1) {
         const a4_1 = parseFloat(answers['A4_1']) || 0;
         const a4_2 = parseFloat(answers['A4_2']) || 0;
@@ -778,9 +846,6 @@ function nextSection() {
         }
     }
     
-    // ============================================
-    // VALIDACIÓN DE B3 SEGÚN B2
-    // ============================================
     if (currentSection === 2) {
         const validation = validateB3Value();
         if (!validation.valid) {
@@ -795,9 +860,76 @@ function nextSection() {
         }
     }
     
-    // ============================================
-    // VALIDACIÓN DE "OTRO" (CAMPO DE ESPECIFICACIÓN OBLIGATORIO)
-    // ============================================
+    // Validación para C5 (máximo 2 opciones)
+    if (currentSection === 3) {
+        const c5Validation = validateC5Selection();
+        if (!c5Validation.valid) {
+            if (c5Validation.count < 2) {
+                showErrorAndVibrate('⚠️ Debe seleccionar exactamente 2 combustibles para cocinar');
+            } else if (c5Validation.count > 2) {
+                showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 2 combustibles para cocinar');
+            }
+            return;
+        }
+    }
+    
+    // Validación para D1 (máximo 3 opciones)
+    if (currentSection === 6) {
+        let selectedCount = 0;
+        const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+        for (let opt of d1Options) {
+            if (answers[`D1_${opt}`] === true) selectedCount++;
+        }
+        if (answers['D1_Otro'] === true) selectedCount++;
+        
+        if (selectedCount === 0) {
+            showErrorAndVibrate('⚠️ Debe seleccionar al menos un impacto del cambio climático');
+            return;
+        }
+        if (selectedCount > 3) {
+            showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 3 impactos del cambio climático');
+            return;
+        }
+        
+        if (selectedCount === 3) {
+            const ordenValue = answers['D1_1'];
+            if (!ordenValue || ordenValue.trim() === '') {
+                showErrorAndVibrate('⚠️ Por favor ordene los 3 impactos seleccionados (1°, 2°, 3°)');
+                const orderInput = document.getElementById('d1_order_text');
+                if (orderInput) {
+                    orderInput.classList.add('field-error');
+                    orderInput.focus();
+                }
+                return;
+            } else {
+                const orderInput = document.getElementById('d1_order_text');
+                if (orderInput) orderInput.classList.remove('field-error');
+            }
+        }
+    }
+    
+    // Validación para H14: si responde Sí, debe responder H15.1
+    if (currentSection === 7) {
+        if (answers['H14'] === 'Sí') {
+            const h15_1Value = answers['H15_1'];
+            if (!h15_1Value || h15_1Value === '') {
+                showErrorAndVibrate('⚠️ Al responder "Sí" en H14, debe responder la pregunta H15.1 (Cooperativa agrícola)');
+                return;
+            }
+        }
+    }
+    
+    // Validación para I1: guardar el valor de "Otro" especificado
+    if (currentSection === 8) {
+        if (answers['I1_1'] === 'Otro' && answers['I1_1_otro'] && answers['I1_1_otro'].trim() !== '') {
+            answers['I1_1'] = `Otro: ${answers['I1_1_otro'].trim()}`;
+        }
+        if (answers['I1_2'] === 'Otro' && answers['I1_2_otro'] && answers['I1_2_otro'].trim() !== '') {
+            answers['I1_2'] = `Otro: ${answers['I1_2_otro'].trim()}`;
+        }
+    }
+    
+    // Validación de "Otro" campos
     const sections = buildFullSections();
     const sec = sections[currentSection];
     if (sec) {
@@ -806,7 +938,6 @@ function nextSection() {
                 const otherValue = answers[`${q.id}_otro`];
                 if (!otherValue || otherValue.trim() === '') {
                     showErrorAndVibrate(`⚠️ Por favor especifique "Otro" en la pregunta: ${q.text}`);
-                    // Marcar el campo como error visualmente
                     const otherInput = document.getElementById(`other_input_${q.id}`);
                     if (otherInput) {
                         otherInput.classList.add('field-error');
@@ -814,9 +945,9 @@ function nextSection() {
                     }
                     return;
                 } else {
-                    // Remover error visual si existe
                     const otherInput = document.getElementById(`other_input_${q.id}`);
                     if (otherInput) otherInput.classList.remove('field-error');
+                    answers[q.id] = `Otro: ${otherValue.trim()}`;
                 }
             }
             if (q.type === 'checkbox' && q.hasOther && answers[`${q.id}_Otro`] === true) {
@@ -917,14 +1048,12 @@ function updateProgress() {
 
 function setAnswer(id,val) { 
     answers[id]=val; 
-    // Si es un campo "otro", remover clase de error cuando el usuario escribe
     if (id.endsWith('_otro')) {
         const inputElement = document.querySelector(`#other_input_${id.replace('_otro', '')}`);
         if (inputElement && val.trim() !== '') {
             inputElement.classList.remove('field-error');
         }
     }
-    // Validación en tiempo real para email
     if (id === 'S0_email' && val !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       const emailInput = document.querySelector(`[data-qid="${id}"] input`);
@@ -936,7 +1065,6 @@ function setAnswer(id,val) {
         }
       }
     }
-    // Validación en tiempo real para A1
     if (id === 'A1') {
       const value = parseInt(val);
       const a1Input = document.querySelector(`[data-qid="${id}"] input`);
@@ -949,13 +1077,14 @@ function setAnswer(id,val) {
         }
       }
     }
-    // Validación en tiempo real para B3
     if (id === 'B3') {
         setTimeout(() => validateB3InRealTime(), 100);
     }
+    if (id === 'D1_1') {
+        // Ya se guarda el valor
+    }
 }
 
-// Enforce max selections para checkboxes
 function enforceMaxSelections(questionId, maxSelections) {
   const questionBlock = document.querySelector(`[data-qid="${questionId}"]`);
   if (!questionBlock) return;
@@ -1146,7 +1275,6 @@ function selectRadio(id, val, el) {
     const previousValue = answers[id];
     answers[id] = val;
     
-    // Si es B2 y se selecciona No tiene educación o No sabe, forzar B3 = 0
     if (id === 'B2') {
         if (val === 'No tiene educación' || val === 'No sabe') {
             answers['B3'] = 0;
@@ -1165,7 +1293,6 @@ function selectRadio(id, val, el) {
     if (otherInput) {
         if (val === 'Otro') {
             otherInput.classList.add('visible');
-            // Limpiar valor anterior de otro si existe
             if (answers[`${id}_otro`]) {
                 otherInput.value = answers[`${id}_otro`];
             } else {
@@ -1193,7 +1320,6 @@ function selectRadio(id, val, el) {
 function toggleCheck(id, val, el) { 
   let key = `${id}_${val}`;
   
-  // Lógica especial para F9 (Ninguno excluye a los demás)
   if (id === 'F9' && val === 'Ninguno (pasar a la F14)') {
     const todasLasOpciones = ['Fiebre (calentura)', 'Sudor frío', 'Escalofríos (chucho)', 
                                'Diarrea', 'Tos', 'Dolor muscular', 'Mareos', 'Otro'];
@@ -1240,7 +1366,6 @@ function toggleCheck(id, val, el) {
     if (otherInput) {
       if (answers[key]) {
         otherInput.classList.add('visible');
-        // Limpiar valor anterior de otro si existe
         if (answers[`${id}_otro`]) {
             otherInput.value = answers[`${id}_otro`];
         } else {
@@ -1255,26 +1380,21 @@ function toggleCheck(id, val, el) {
     }
   }
   
-  // ============================================
-  // APLICAR LÍMITES DE SELECCIÓN DINÁMICAMENTE
-  // ============================================
-  
-  // Límite para C5 (combustibles para cocinar) - máximo 2
   if (id === 'C5') {
     setTimeout(() => enforceMaxSelections('C5', 2), 50);
   }
   
-  // Límite para D1 (impactos del cambio climático) - máximo 3
   if (id === 'D1') {
-    setTimeout(() => enforceMaxSelections('D1', 3), 50);
+    setTimeout(() => {
+        enforceMaxSelections('D1', 3);
+        updateD1OrderInput();
+    }, 50);
   }
   
-  // Límite para F6 (enfermedades) - máximo 2
   if (id === 'F6') {
     setTimeout(() => enforceMaxSelections('F6', 2), 50);
   }
   
-  // Límite para F9 (síntomas) - máximo 3
   if (id === 'F9') {
     setTimeout(() => enforceMaxSelections('F9', 3), 50);
   }
@@ -1292,7 +1412,6 @@ function setLikert(id,val,el){ answers[id]=val; let wrap=el.closest('.likert-wra
 
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// Función para añadir tooltips
 function addTooltipToQuestion(questionId, tooltipText) {
   const questionBlock = document.querySelector(`[data-qid="${questionId}"]`);
   if (questionBlock) {
@@ -1307,7 +1426,6 @@ function addTooltipToQuestion(questionId, tooltipText) {
   }
 }
 
-// Función para actualizar progreso de sección
 function updateSectionProgress() {
   const sections = buildFullSections();
   const sec = sections[currentSection];
@@ -1420,7 +1538,7 @@ function isVisible(id) {
     case 'I4': return (a['I1_2'] !== undefined && a['I1_2'] !== '') && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
     case 'I5': return (a['I1_2'] !== undefined && a['I1_2'] !== '') && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
     case 'D1_1':
-      const opcionesD1 = ['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola'];
+      const opcionesD1 = ['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios','Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola'];
       let haySeleccion = false;
       for (let opt of opcionesD1) if (a[`D1_${opt}`] === true) haySeleccion = true;
       if (!haySeleccion && a['D1_Otro'] === true && a['D1_otro'] && a['D1_otro'].trim() !== '') haySeleccion = true;
@@ -1641,10 +1759,10 @@ function renderQuestion(q){
   } else if(q.type==='yesno3'){
     html+=`<div class="options-list">`; ['Sí','No','No lo sé'].forEach(opt=>{ let sel=answers[q.id]===opt?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${opt}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===opt?'checked':''}><span class="option-text">${opt}</span></label>`; }); html+=`</div>`;
   } else if(q.type==='likert5'){
-    let opts=['Para nada','Un poco (ligeramente)','Moderadamente','Bastante (significativamente)','Extremadamente'];
+    let opts=['Nada','Poco','Regular','Mucho'];
     html+=`<div class="likert-wrap">`; opts.forEach(o=>{ let sel=answers[q.id]===o?'selected':''; html+=`<button class="likert-btn ${sel}" onclick="setLikert('${q.id}','${o}',this)">${o}</button>`; }); html+=`</div>`;
   } else if(q.type==='likert5b'){
-    let opts=['Nada','Un poco (ligeramente)','Moderadamente','Bastante (significativamente)','Mucho'];
+    let opts=['Nada','Poco','Regular','Mucho'];
     html+=`<div class="likert-wrap">`; opts.forEach(o=>{ let sel=answers[q.id]===o?'selected':''; html+=`<button class="likert-btn ${sel}" onclick="setLikert('${q.id}','${o}',this)">${o}</button>`; }); html+=`</div>`;
   } else if(q.type==='freq4'){
     let opts=['Para nada','Varios días','Más de la mitad de los días','Casi todos los días'];
@@ -1703,6 +1821,44 @@ function renderSection(keepScroll = false) {
       card.appendChild(renderQuestion(q)); 
     }
   }); 
+  
+  // Agregar el contenedor para orden de D1 si es la sección D
+  if (currentSection === 6) {
+    const selectedOptions = [];
+    const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+    for (let opt of d1OptionsList) {
+        if (answers[`D1_${opt}`] === true) {
+            selectedOptions.push(opt);
+        }
+    }
+    if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
+        selectedOptions.push(`Otro: ${answers['D1_otro']}`);
+    }
+    
+    if (selectedOptions.length === 3) {
+      const orderContainer = document.createElement('div');
+      orderContainer.id = 'd1-order-container';
+      orderContainer.className = 'order-input-container';
+      const defaultOrder = selectedOptions.map((opt, idx) => `${idx+1}. ${opt}`).join(', ');
+      const currentValue = answers['D1_1'] || '';
+      orderContainer.innerHTML = `
+        <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°): <span class="required-mark">*</span></label>
+        <input type="text" id="d1_order_text" class="order-input" placeholder="Ej: ${defaultOrder}" value="${escHtml(currentValue)}" oninput="setAnswer('D1_1', this.value)">
+        <div class="order-hint">Escriba en orden de importancia, separados por comas. Ejemplo: "1. Sequía, 2. Inundaciones, 3. Ola de calor"</div>
+      `;
+      card.appendChild(orderContainer);
+    } else if (selectedOptions.length !== 3) {
+      const orderContainer = document.createElement('div');
+      orderContainer.id = 'd1-order-container';
+      orderContainer.className = 'order-input-container hidden';
+      orderContainer.innerHTML = `
+        <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°):</label>
+        <input type="text" id="d1_order_text" class="order-input" placeholder="Seleccione exactamente 3 opciones para ordenar">
+      `;
+      card.appendChild(orderContainer);
+    }
+  }
+  
   el.appendChild(card); 
   
 setTimeout(() => {
@@ -1727,41 +1883,29 @@ setTimeout(() => {
     });
     updateSectionProgress();
     
-    // ============================================
-    // TOOLTIPS INFORMATIVOS
-    // ============================================
     addTooltipToQuestion('A1', 'Si lleva 1 año o menos, la encuesta finalizará automáticamente');
     addTooltipToQuestion('M8', 'Seleccione la práctica principal que usa su familia');
     addTooltipToQuestion('B2', 'El nivel educativo del jefe de hogar');
     addTooltipToQuestion('B3', 'Años de estudio desde primaria hasta superior');
-    
-    // Tooltips para preguntas con límites
-    addTooltipToQuestion('C5', 'Seleccione los 2 combustibles principales que usa para cocinar');
-    addTooltipToQuestion('D1', 'Seleccione máximo 3 impactos del cambio climático');
+    addTooltipToQuestion('C5', 'Seleccione EXACTAMENTE 2 combustibles principales que usa para cocinar');
+    addTooltipToQuestion('D1', 'Seleccione máximo 3 impactos del cambio climático. Si selecciona 3, deberá ordenarlos');
     addTooltipToQuestion('F6', 'Seleccione hasta 2 enfermedades o lesiones principales');
     addTooltipToQuestion('F9', 'Seleccione máximo 3 síntomas. "Ninguno" excluye las demás opciones');
     
-    // ============================================
-    // LÍMITES DE SELECCIÓN POR SECCIÓN
-    // ============================================
-    
-    // Sección C (índice 3) - Combustibles para cocinar: máximo 2
     if (currentSection === 3) {
       enforceMaxSelections('C5', 2);
     }
     
-    // Sección D (índice 6) - Impactos del clima: máximo 3
     if (currentSection === 6) {
       enforceMaxSelections('D1', 3);
+      updateD1OrderInput();
     }
     
-    // Sección F (índice 5) - Enfermedades y síntomas
     if (currentSection === 5) {
-      enforceMaxSelections('F6', 2);  // Enfermedades: máximo 2
-      enforceMaxSelections('F9', 3);  // Síntomas: máximo 3
+      enforceMaxSelections('F6', 2);
+      enforceMaxSelections('F9', 3);
     }
     
-    // Validar B3 en tiempo real después de renderizar
     if (currentSection === 2) {
       validateB3InRealTime();
     }
@@ -1940,10 +2084,8 @@ function exportAllCSV(){ let records=getRecords(); if(!records.length){ showToas
 function switchTab(tab){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); if(tab==='survey'){ document.getElementById('tab-survey').classList.add('active'); document.getElementById('main-app').classList.remove('hidden'); document.getElementById('admin-screen').classList.add('hidden'); document.getElementById('complete-screen').classList.add('hidden'); } else { document.getElementById('tab-records').classList.add('active'); document.getElementById('main-app').classList.add('hidden'); document.getElementById('admin-screen').classList.remove('hidden'); document.getElementById('complete-screen').classList.add('hidden'); renderRecords(); } }
 function showToast(msg){ let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
-// Inicialización
 updateConnectionStatus();
 
-// Añadir hint de atajos de teclado
 const shortcutsHint = document.createElement('div');
 shortcutsHint.className = 'shortcuts-hint';
 document.body.appendChild(shortcutsHint);
@@ -1955,7 +2097,7 @@ function buildFullSections() {
       { id:'S0_email', type:'text', text:'Correo electrónico:' },  
       { id:'S0_cod', type:'text', text:'Código:', hint:'Colocar las primeras letras de tus nombres y apellidos' }, 
       { id:'S0_ubic', type:'text', text:'Ubicación:' },
-      { id:'S0_zona', type:'radio', text:'Indique a que Zona corresponde la comunidad:', options:['Urbana','Rural'] },
+      { id:'S0_zona', type:'radio', text:'Indique a que Zona corresponde la comunidad:', options:['Urbana','Suburbana o periurbana','Rural'] },
       { id:'S0_dist', type:'radio', text:'Municipalidad o alcaldía', options:['Riberalta','Guayaramerín','Trinidad'] }
     ]},
     { icon:'👥', title:'Sección A. Demografía', questions:[
@@ -2022,7 +2164,7 @@ function buildFullSections() {
       { id:'C3', type:'yesno', text:'C3. ¿Su hogar tiene electricidad del sistema interconectado (red pública)?', skip:'Cuando la respuesta es afirmativa continue a C3.1, caso contrario pase a C4' },
       { id:'C3_1', type:'number', text:'C3.1. En caso sea afirmativo, ¿cuántas horas al día tiene electricidad su hogar en promedio? (horas)' },
       { id:'C4', type:'radio', text:'C4. Si no tiene electricidad, ¿cuál es la principal fuente de energía en su hogar?', options:['Carbón y leña','Energía solar','Gas','Otro'], hasOther: true },
-      { id:'C5', type:'checkbox', text:'C5. ¿Cuáles son los dos principales combustibles usados para cocinar?', options:['Leña o carbón','Gas','Electricidad','Otro'], hasOther: true },
+      { id:'C5', type:'checkbox', text:'C5. ¿Cuáles son los dos principales combustibles usados para cocinar? (Debe seleccionar EXACTAMENTE 2)', options:['Leña o carbón','Gas','Electricidad','Otro'], hasOther: true },
       { id:'C6', type:'number', text:'C6. ¿Cuántas habitaciones (cuartos) tiene?' },
       { id:'C7', type:'radio', text:'C7. Tipo de techo (observar)', options:['Vegetal o palma (Irapay/crisneja)','Hoja de motacu', 'Hoja de jatata', 'Calamina o zinc','Tejas de arcilla','Cemento','Otro'], hasOther: true },
       { id:'C8', type:'radio', text:'C8. Tipo de pared (observar)', options:['Madera','Ladrillo o cemento (material noble)','Adobe','Chuchio (tallos de chuchio cubierto con barro)','Otro'], hasOther: true },
@@ -2077,8 +2219,8 @@ function buildFullSections() {
       { id:'F19', type:'radio', text:'F19. Solo si fue en el último año a la posta por fiebre (calentura) suya o de un familiar para descartar Malaria o Dengue: ¿Tenían pruebas disponibles?', options:['Sí','No','Nunca fui'] }
     ]},
     { icon:'🌡️', title:'Sección D. Impacto y percepciones del clima', questions:[
-      { id:'D1', type:'checkbox', text:'D1. Durante los últimos dos años, ¿su hogar fue afectado por los impactos del cambio climático, tales como: (hasta tres opciones, ordenadas por el grado de afectación)?', options:['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios', 'Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola','Ninguno','Otro'], hasOther: true },
-      { id:'D1_1', type:'text', text:'D1.1. Según la pregunta anterior ordene de mayor a menor el grado de afectación, los tres impactos del cambio climático seleccionados', placeholder:'Ej: 1. Sequía, 2. Inundaciones, 3. Ola de calor' },
+      { id:'D1', type:'checkbox', text:'D1. Durante los últimos dos años, ¿su hogar fue afectado por los impactos del cambio climático, tales como: ? (Puede marcar hasta tres opciones)', options:['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios', 'Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola','Otro'], hasOther: true },
+      { id:'D1_1', type:'text', text:'', placeholder:'', hidden: true },
       { id:'D2', type:'likert5b', text:'D2. ¿Ha escuchado sobre cambio climático y calentamiento global?' },
       { id:'D3', type:'likert5b', text:'D3. En los últimos 2 años, he notado que las lluvias fuertes favorecen la presencia de zancudos (mosquitos)' },
       { id:'D4', type:'likert5b', text:'D4. En los últimos 2 años, he notado que el cambio climático afecta el brote de malaria o dengue' },
