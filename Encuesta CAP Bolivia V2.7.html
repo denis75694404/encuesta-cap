@@ -804,28 +804,22 @@ function updateD1OrderUI() {
     }
     
     d1SelectedImpacts = selectedOptions;
+    const numImpacts = selectedOptions.length;
     const orderContainer = document.getElementById('d1-order-container');
     
     if (orderContainer) {
-        const numImpacts = selectedOptions.length;
-        
         if (numImpacts >= 1 && numImpacts <= 3) {
             orderContainer.classList.remove('hidden');
             const orderRadiosDiv = document.getElementById('d1-order-radios');
             if (orderRadiosDiv) {
                 orderRadiosDiv.innerHTML = '';
                 
-                // Crear solo las posiciones necesarias según la cantidad de impactos
-                const positions = [];
-                if (numImpacts >= 1) positions.push('Primer impacto (1°)');
-                if (numImpacts >= 2) positions.push('Segundo impacto (2°)');
-                if (numImpacts >= 3) positions.push('Tercer impacto (3°)');
-                
-                for (let i = 0; i < positions.length; i++) {
+                for (let i = 0; i < numImpacts; i++) {
+                    const posicion = i === 0 ? 'Primer impacto (1°)' : (i === 1 ? 'Segundo impacto (2°)' : 'Tercer impacto (3°)');
                     const orderItem = document.createElement('div');
                     orderItem.className = 'order-item';
                     orderItem.innerHTML = `
-                        <span style="font-weight:600; min-width:130px;">${positions[i]}:</span>
+                        <span style="font-weight:600; min-width:130px;">${posicion}:</span>
                         <select class="order-select" data-position="${i}" onchange="updateD1OrderValue()">
                             <option value="">Seleccione...</option>
                             ${selectedOptions.map(opt => `<option value="${opt.replace(/"/g, '&quot;')}">${opt}</option>`).join('')}
@@ -834,7 +828,6 @@ function updateD1OrderUI() {
                     orderRadiosDiv.appendChild(orderItem);
                 }
                 
-                // Cargar valores guardados si existen
                 if (answers['D1_order_1'] && numImpacts >= 1) {
                     const select0 = orderRadiosDiv.querySelector('.order-select[data-position="0"]');
                     if (select0) select0.value = answers['D1_order_1'] || '';
@@ -847,14 +840,17 @@ function updateD1OrderUI() {
                     const select2 = orderRadiosDiv.querySelector('.order-select[data-position="2"]');
                     if (select2) select2.value = answers['D1_order_3'] || '';
                 }
+                
+                updateD1OrderValue();
             }
         } else {
             orderContainer.classList.add('hidden');
-            // Limpiar respuestas de orden si no hay impactos seleccionados
+            delete answers['D1_order_1'];
+            delete answers['D1_order_2'];
+            delete answers['D1_order_3'];
             answers['D1_1'] = '';
-            answers['D1_order_1'] = '';
-            answers['D1_order_2'] = '';
-            answers['D1_order_3'] = '';
+            const orderTextInput = document.getElementById('d1_order_text');
+            if (orderTextInput) orderTextInput.value = '';
         }
     }
 }
@@ -863,31 +859,30 @@ function updateD1OrderValue() {
     const selects = document.querySelectorAll('#d1-order-radios .order-select');
     const numSelects = selects.length;
     
-    if (numSelects >= 1) {
-        const order1 = selects[0] ? selects[0].value : '';
-        const order2 = selects[1] ? selects[1].value : '';
-        const order3 = selects[2] ? selects[2].value : '';
-        
-        // Guardar cada orden individualmente
-        answers['D1_order_1'] = order1;
-        if (order2) answers['D1_order_2'] = order2;
-        if (order3) answers['D1_order_3'] = order3;
-        
-        // Construir el texto según la cantidad de impactos seleccionados
-        let orderText = '';
-        if (order1) orderText = `1. ${order1}`;
-        if (order2) orderText += `, 2. ${order2}`;
-        if (order3) orderText += `, 3. ${order3}`;
-        
-        answers['D1_1'] = orderText;
-        
-        const orderTextInput = document.getElementById('d1_order_text');
-        if (orderTextInput) orderTextInput.value = orderText;
-    } else {
-        answers['D1_1'] = '';
-        const orderTextInput = document.getElementById('d1_order_text');
-        if (orderTextInput) orderTextInput.value = '';
+    delete answers['D1_order_1'];
+    delete answers['D1_order_2'];
+    delete answers['D1_order_3'];
+    
+    for (let i = 0; i < numSelects; i++) {
+        const value = selects[i] ? selects[i].value : '';
+        if (value && value !== '') {
+            answers[`D1_order_${i+1}`] = value;
+        }
     }
+    
+    const orderParts = [];
+    for (let i = 0; i < numSelects; i++) {
+        const value = answers[`D1_order_${i+1}`];
+        if (value && value !== '') {
+            const posicion = i === 0 ? '1°' : (i === 1 ? '2°' : '3°');
+            orderParts.push(`${posicion}. ${value}`);
+        }
+    }
+    
+    answers['D1_1'] = orderParts.join(', ');
+    
+    const orderTextInput = document.getElementById('d1_order_text');
+    if (orderTextInput) orderTextInput.value = answers['D1_1'];
 }
 
 function nextSection() {
@@ -964,7 +959,6 @@ if (currentSection === 6) {
         return;
     }
     
-    // Validar que se haya completado el orden para TODOS los impactos seleccionados
     if (selectedCount >= 1) {
         let ordenCompleto = true;
         if (selectedCount >= 1 && (!answers['D1_order_1'] || answers['D1_order_1'] === '')) ordenCompleto = false;
@@ -1839,55 +1833,16 @@ if (currentSection === 1) {
     checkSameSex();
 }
   if (currentSection === 6) {
-    const selectedOptions = [];
-    const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
-    for (let opt of d1OptionsList) {
-        if (answers[`D1_${opt}`] === true) {
-            selectedOptions.push(opt);
-        }
-    }
-    if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
-        selectedOptions.push(`Otro: ${answers['D1_otro']}`);
-    }
     const orderContainer = document.createElement('div');
     orderContainer.id = 'd1-order-container';
     orderContainer.className = 'order-input-container hidden';
     orderContainer.innerHTML = `
-      <label>📌 Ordene los 3 impactos seleccionados (1°, 2°, 3°): <span class="required-mark">*</span></label>
+      <label>📌 D1.1. Según la pregunta anterior ordene de mayor a menor el grado de afectación, los tres impactos del cambio climático seleccionados: <span class="required-mark">*</span></label>
       <div id="d1-order-radios" class="radio-group-order"></div>
       <input type="hidden" id="d1_order_text" value="${escHtml(answers['D1_1'] || '')}">
-      <div class="order-hint">Seleccione el orden de importancia para cada impacto. Debe seleccionar los tres.</div>
+      <div class="order-hint">Seleccione el orden de importancia para cada impacto.</div>
     `;
     card.appendChild(orderContainer);
-    if (selectedOptions.length === 3) {
-      setTimeout(() => {
-        const container = document.getElementById('d1-order-container');
-        if (container) container.classList.remove('hidden');
-        const orderRadiosDiv = document.getElementById('d1-order-radios');
-        if (orderRadiosDiv && selectedOptions.length === 3) {
-          orderRadiosDiv.innerHTML = '';
-          const positions = ['Primer impacto (1°)', 'Segundo impacto (2°)', 'Tercer impacto (3°)'];
-          for (let i = 0; i < 3; i++) {
-            const orderItem = document.createElement('div');
-            orderItem.className = 'order-item';
-            orderItem.innerHTML = `
-              <span style="font-weight:600; min-width:130px;">${positions[i]}:</span>
-              <select class="order-select" data-position="${i}" onchange="updateD1OrderValue()">
-                <option value="">Seleccione...</option>
-                ${selectedOptions.map(opt => `<option value="${opt.replace(/"/g, '&quot;')}">${opt}</option>`).join('')}
-              </select>
-            `;
-            orderRadiosDiv.appendChild(orderItem);
-          }
-          if (answers['D1_order_1'] && answers['D1_order_2'] && answers['D1_order_3']) {
-            const selects = orderRadiosDiv.querySelectorAll('.order-select');
-            if (selects[0]) selects[0].value = answers['D1_order_1'] || '';
-            if (selects[1]) selects[1].value = answers['D1_order_2'] || '';
-            if (selects[2]) selects[2].value = answers['D1_order_3'] || '';
-          }
-        }
-      }, 50);
-    }
   }
   el.appendChild(card); 
 setTimeout(() => {
