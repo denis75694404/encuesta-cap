@@ -793,6 +793,7 @@ let d1SelectedImpacts = [];
 function updateD1OrderUI() {
     const selectedOptions = [];
     const d1OptionsList = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+    
     for (let opt of d1OptionsList) {
         if (answers[`D1_${opt}`] === true) {
             selectedOptions.push(opt);
@@ -801,16 +802,26 @@ function updateD1OrderUI() {
     if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') {
         selectedOptions.push(`Otro: ${answers['D1_otro']}`);
     }
+    
     d1SelectedImpacts = selectedOptions;
     const orderContainer = document.getElementById('d1-order-container');
+    
     if (orderContainer) {
-        if (selectedOptions.length === 3) {
+        const numImpacts = selectedOptions.length;
+        
+        if (numImpacts >= 1 && numImpacts <= 3) {
             orderContainer.classList.remove('hidden');
             const orderRadiosDiv = document.getElementById('d1-order-radios');
-            if (orderRadiosDiv && selectedOptions.length === 3) {
+            if (orderRadiosDiv) {
                 orderRadiosDiv.innerHTML = '';
-                const positions = ['Primer impacto (1°)', 'Segundo impacto (2°)', 'Tercer impacto (3°)'];
-                for (let i = 0; i < 3; i++) {
+                
+                // Crear solo las posiciones necesarias según la cantidad de impactos
+                const positions = [];
+                if (numImpacts >= 1) positions.push('Primer impacto (1°)');
+                if (numImpacts >= 2) positions.push('Segundo impacto (2°)');
+                if (numImpacts >= 3) positions.push('Tercer impacto (3°)');
+                
+                for (let i = 0; i < positions.length; i++) {
                     const orderItem = document.createElement('div');
                     orderItem.className = 'order-item';
                     orderItem.innerHTML = `
@@ -822,44 +833,60 @@ function updateD1OrderUI() {
                     `;
                     orderRadiosDiv.appendChild(orderItem);
                 }
-                if (answers['D1_order_1'] && answers['D1_order_2'] && answers['D1_order_3']) {
-                    const selects = orderRadiosDiv.querySelectorAll('.order-select');
-                    if (selects[0]) selects[0].value = answers['D1_order_1'] || '';
-                    if (selects[1]) selects[1].value = answers['D1_order_2'] || '';
-                    if (selects[2]) selects[2].value = answers['D1_order_3'] || '';
+                
+                // Cargar valores guardados si existen
+                if (answers['D1_order_1'] && numImpacts >= 1) {
+                    const select0 = orderRadiosDiv.querySelector('.order-select[data-position="0"]');
+                    if (select0) select0.value = answers['D1_order_1'] || '';
+                }
+                if (answers['D1_order_2'] && numImpacts >= 2) {
+                    const select1 = orderRadiosDiv.querySelector('.order-select[data-position="1"]');
+                    if (select1) select1.value = answers['D1_order_2'] || '';
+                }
+                if (answers['D1_order_3'] && numImpacts >= 3) {
+                    const select2 = orderRadiosDiv.querySelector('.order-select[data-position="2"]');
+                    if (select2) select2.value = answers['D1_order_3'] || '';
                 }
             }
         } else {
             orderContainer.classList.add('hidden');
-            if (selectedOptions.length !== 3) {
-                answers['D1_1'] = '';
-                answers['D1_order_1'] = '';
-                answers['D1_order_2'] = '';
-                answers['D1_order_3'] = '';
-            }
+            // Limpiar respuestas de orden si no hay impactos seleccionados
+            answers['D1_1'] = '';
+            answers['D1_order_1'] = '';
+            answers['D1_order_2'] = '';
+            answers['D1_order_3'] = '';
         }
     }
 }
 
 function updateD1OrderValue() {
     const selects = document.querySelectorAll('#d1-order-radios .order-select');
-    if (selects.length === 3) {
-        const order1 = selects[0].value;
-        const order2 = selects[1].value;
-        const order3 = selects[2].value;
-        if (order1 && order2 && order3) {
-            const orderText = `1. ${order1}, 2. ${order2}, 3. ${order3}`;
-            answers['D1_1'] = orderText;
-            answers['D1_order_1'] = order1;
-            answers['D1_order_2'] = order2;
-            answers['D1_order_3'] = order3;
-            const orderTextInput = document.getElementById('d1_order_text');
-            if (orderTextInput) orderTextInput.value = orderText;
-        } else {
-            answers['D1_1'] = '';
-            const orderTextInput = document.getElementById('d1_order_text');
-            if (orderTextInput) orderTextInput.value = '';
-        }
+    const numSelects = selects.length;
+    
+    if (numSelects >= 1) {
+        const order1 = selects[0] ? selects[0].value : '';
+        const order2 = selects[1] ? selects[1].value : '';
+        const order3 = selects[2] ? selects[2].value : '';
+        
+        // Guardar cada orden individualmente
+        answers['D1_order_1'] = order1;
+        if (order2) answers['D1_order_2'] = order2;
+        if (order3) answers['D1_order_3'] = order3;
+        
+        // Construir el texto según la cantidad de impactos seleccionados
+        let orderText = '';
+        if (order1) orderText = `1. ${order1}`;
+        if (order2) orderText += `, 2. ${order2}`;
+        if (order3) orderText += `, 3. ${order3}`;
+        
+        answers['D1_1'] = orderText;
+        
+        const orderTextInput = document.getElementById('d1_order_text');
+        if (orderTextInput) orderTextInput.value = orderText;
+    } else {
+        answers['D1_1'] = '';
+        const orderTextInput = document.getElementById('d1_order_text');
+        if (orderTextInput) orderTextInput.value = '';
     }
 }
 
@@ -920,29 +947,39 @@ function nextSection() {
             return;
         }
     }
-    if (currentSection === 6) {
-        let selectedCount = 0;
-        const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
-        for (let opt of d1Options) {
-            if (answers[`D1_${opt}`] === true) selectedCount++;
-        }
-        if (answers['D1_Otro'] === true) selectedCount++;
-        if (selectedCount === 0) {
-            showErrorAndVibrate('⚠️ Debe seleccionar al menos un impacto del cambio climático');
+if (currentSection === 6) {
+    let selectedCount = 0;
+    const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
+    for (let opt of d1Options) {
+        if (answers[`D1_${opt}`] === true) selectedCount++;
+    }
+    if (answers['D1_Otro'] === true) selectedCount++;
+    
+    if (selectedCount === 0) {
+        showErrorAndVibrate('⚠️ Debe seleccionar al menos un impacto del cambio climático');
+        return;
+    }
+    if (selectedCount > 3) {
+        showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 3 impactos del cambio climático');
+        return;
+    }
+    
+    // Validar que se haya completado el orden para TODOS los impactos seleccionados
+    if (selectedCount >= 1) {
+        let ordenCompleto = true;
+        if (selectedCount >= 1 && (!answers['D1_order_1'] || answers['D1_order_1'] === '')) ordenCompleto = false;
+        if (selectedCount >= 2 && (!answers['D1_order_2'] || answers['D1_order_2'] === '')) ordenCompleto = false;
+        if (selectedCount >= 3 && (!answers['D1_order_3'] || answers['D1_order_3'] === '')) ordenCompleto = false;
+        
+        if (!ordenCompleto) {
+            const mensaje = selectedCount === 1 ? '⚠️ Por favor seleccione el orden para el impacto seleccionado (1°)' :
+                           selectedCount === 2 ? '⚠️ Por favor seleccione el orden para los 2 impactos seleccionados (1° y 2°)' :
+                           '⚠️ Por favor seleccione el orden para los 3 impactos seleccionados (1°, 2° y 3°)';
+            showErrorAndVibrate(mensaje);
             return;
-        }
-        if (selectedCount > 3) {
-            showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 3 impactos del cambio climático');
-            return;
-        }
-        if (selectedCount === 3) {
-            const ordenValue = answers['D1_1'];
-            if (!ordenValue || ordenValue.trim() === '') {
-                showErrorAndVibrate('⚠️ Por favor ordene los 3 impactos seleccionados (1°, 2°, 3°)');
-                return;
-            }
         }
     }
+}
     if (currentSection === 7) {
         if (answers['H14'] === 'Sí') {
             const h15_1Value = answers['H15_1'];
