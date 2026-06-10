@@ -795,6 +795,48 @@ function nextSection() {
         }
     }
     
+    // ============================================
+    // VALIDACIÓN DE "OTRO" (CAMPO DE ESPECIFICACIÓN OBLIGATORIO)
+    // ============================================
+    const sections = buildFullSections();
+    const sec = sections[currentSection];
+    if (sec) {
+        for (const q of sec.questions) {
+            if (q.type === 'radio' && q.hasOther && answers[q.id] === 'Otro') {
+                const otherValue = answers[`${q.id}_otro`];
+                if (!otherValue || otherValue.trim() === '') {
+                    showErrorAndVibrate(`⚠️ Por favor especifique "Otro" en la pregunta: ${q.text}`);
+                    // Marcar el campo como error visualmente
+                    const otherInput = document.getElementById(`other_input_${q.id}`);
+                    if (otherInput) {
+                        otherInput.classList.add('field-error');
+                        otherInput.focus();
+                    }
+                    return;
+                } else {
+                    // Remover error visual si existe
+                    const otherInput = document.getElementById(`other_input_${q.id}`);
+                    if (otherInput) otherInput.classList.remove('field-error');
+                }
+            }
+            if (q.type === 'checkbox' && q.hasOther && answers[`${q.id}_Otro`] === true) {
+                const otherValue = answers[`${q.id}_otro`];
+                if (!otherValue || otherValue.trim() === '') {
+                    showErrorAndVibrate(`⚠️ Por favor especifique "Otro" en la pregunta: ${q.text}`);
+                    const otherInput = document.getElementById(`other_input_${q.id}`);
+                    if (otherInput) {
+                        otherInput.classList.add('field-error');
+                        otherInput.focus();
+                    }
+                    return;
+                } else {
+                    const otherInput = document.getElementById(`other_input_${q.id}`);
+                    if (otherInput) otherInput.classList.remove('field-error');
+                }
+            }
+        }
+    }
+    
     if (!validateSection()) return;
     
     if (currentSection < TOTAL_SECTIONS - 1) {
@@ -875,6 +917,13 @@ function updateProgress() {
 
 function setAnswer(id,val) { 
     answers[id]=val; 
+    // Si es un campo "otro", remover clase de error cuando el usuario escribe
+    if (id.endsWith('_otro')) {
+        const inputElement = document.querySelector(`#other_input_${id.replace('_otro', '')}`);
+        if (inputElement && val.trim() !== '') {
+            inputElement.classList.remove('field-error');
+        }
+    }
     // Validación en tiempo real para email
     if (id === 'S0_email' && val !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1116,6 +1165,12 @@ function selectRadio(id, val, el) {
     if (otherInput) {
         if (val === 'Otro') {
             otherInput.classList.add('visible');
+            // Limpiar valor anterior de otro si existe
+            if (answers[`${id}_otro`]) {
+                otherInput.value = answers[`${id}_otro`];
+            } else {
+                otherInput.value = '';
+            }
         } else {
             otherInput.classList.remove('visible');
             const otherFieldId = `${id}_otro`;
@@ -1185,6 +1240,12 @@ function toggleCheck(id, val, el) {
     if (otherInput) {
       if (answers[key]) {
         otherInput.classList.add('visible');
+        // Limpiar valor anterior de otro si existe
+        if (answers[`${id}_otro`]) {
+            otherInput.value = answers[`${id}_otro`];
+        } else {
+            otherInput.value = '';
+        }
         otherInput.focus();
       } else {
         otherInput.classList.remove('visible');
@@ -1564,7 +1625,7 @@ function renderQuestion(q){
     if(q.hasOther){
       let otherVal=answers[`${q.id}_otro`]||'';
       let isVisibleOther = answers[q.id] === 'Otro';
-      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" onchange="setAnswer('${q.id}_otro',this.value)">`;
+      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" oninput="setAnswer('${q.id}_otro',this.value)">`;
     }
   } else if(q.type==='checkbox'){
     html+=`<div class="options-list">`;
@@ -1573,7 +1634,7 @@ function renderQuestion(q){
     if(q.hasOther){
       let otherVal=answers[`${q.id}_otro`]||'';
       let isVisibleOther = answers[`${q.id}_Otro`] === true;
-      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" onchange="setAnswer('${q.id}_otro',this.value)">`;
+      html+=`<input type="text" id="other_input_${q.id}" class="other-input ${isVisibleOther ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" oninput="setAnswer('${q.id}_otro',this.value)">`;
     }
   } else if(q.type==='yesno'){
     html+=`<div class="options-list">`; ['Sí','No'].forEach(opt=>{ let sel=answers[q.id]===opt?'selected':''; html+=`<label class="option-item ${sel}" onclick="selectRadio('${q.id}','${opt}',this)"><input type="radio" name="${q.id}" ${answers[q.id]===opt?'checked':''}><span class="option-text">${opt}</span></label>`; }); html+=`</div>`;
