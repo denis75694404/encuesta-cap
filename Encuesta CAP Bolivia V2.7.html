@@ -1834,7 +1834,9 @@ if (currentSection === 1) {
 }
   if (currentSection === 6) {
     const orderContainer = document.createElement('div');
-    orderContainer.id = 'd1-order-container';
+if (currentSection === 6) {
+    const orderContainer = document.createElement('div');
+  orderContainer.id = 'd1-order-container';
     orderContainer.className = 'order-input-container hidden';
     orderContainer.innerHTML = `
       <label>📌 D1.1. Según la pregunta anterior ordene de mayor a menor el grado de afectación, los tres impactos del cambio climático seleccionados: <span class="required-mark">*</span></label>
@@ -1842,7 +1844,12 @@ if (currentSection === 1) {
       <input type="hidden" id="d1_order_text" value="${escHtml(answers['D1_1'] || '')}">
       <div class="order-hint">Seleccione el orden de importancia para cada impacto.</div>
     `;
-    card.appendChild(orderContainer);
+    const d1Block = card.querySelector('[data-qid="D1"]');
+    if (d1Block) {
+      d1Block.insertAdjacentElement('afterend', orderContainer);
+    } else {
+      card.appendChild(orderContainer);
+    }
   }
   el.appendChild(card); 
 setTimeout(() => {
