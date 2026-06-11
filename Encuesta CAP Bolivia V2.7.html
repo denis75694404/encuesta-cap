@@ -2007,6 +2007,12 @@ function processMultipleChoiceAnswers(record) {
         else if (record[questionId] !== undefined && typeof record[questionId] !== 'string') delete processed[questionId];
         for (const key in processed) if (key.startsWith(`${questionId}_`)) delete processed[key];
     }
+    
+    // Asegurar que D1_1 se guarde correctamente
+    if (record['D1_1'] && record['D1_1'] !== '') {
+        processed['D1_1'] = record['D1_1'];
+    }
+    
     return processed;
 }
 
