@@ -523,7 +523,9 @@ function showNativeAlert(message) {
     window.alert(message);
 }
 
+// ── Variables globales ──────────────────────────────────────────────────────
 let currentSection = 0, answers = {}, editingId = null;
+let surveyFinished = false; // CORRECCIÓN: flag para evitar doble guardado
 const TOTAL_SECTIONS = 11;
 const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
 
@@ -1055,6 +1057,7 @@ function returnToConsent() {
     answers = {};
     currentSection = 0;
     editingId = null;
+    surveyFinished = false; // CORRECCIÓN: resetear flag al volver al consentimiento
     resetI1TimerGlobal();
     localStorage.removeItem('survey_progress');
     const consentScreen = document.getElementById('consent-screen');
@@ -1915,7 +1918,10 @@ function getLocalTimestamp() {
     return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
 }
 
+// CORRECCIÓN: finishSurvey con flag para evitar doble guardado
 function finishSurvey() {
+    if (surveyFinished) return;
+    surveyFinished = true;
     answers.timestamp = getLocalTimestamp();
     answers.id = editingId || Date.now().toString();
     saveRecord(answers);
@@ -1929,7 +1935,10 @@ function showComplete(){
     editingId=null; 
     resetI1TimerGlobal();
 }
+
+// CORRECCIÓN: newSurvey resetea el flag surveyFinished
 function newSurvey(){ 
+    surveyFinished = false;
     answers={}; 
     currentSection=0; 
     resetI1TimerGlobal();
