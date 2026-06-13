@@ -775,10 +775,11 @@ function validateC5Selection() {
     if (answers['C5_Otro'] === true && answers['C5_otro'] && answers['C5_otro'].trim() !== '') {
         selectedOptions.push('Otro');
     }
-    if (selectedOptions.length !== 2) {
-        return { valid: false, count: selectedOptions.length };
+    const count = selectedOptions.length;
+    if (count < 1 || count > 2) {
+        return { valid: false, count: count };
     }
-    return { valid: true, count: 2 };
+    return { valid: true, count: count };
 }
 
 function checkSameSex() {
@@ -933,17 +934,17 @@ function nextSection() {
             return;
         }
     }
-    if (currentSection === 3) {
-        const c5Validation = validateC5Selection();
-        if (!c5Validation.valid) {
-            if (c5Validation.count < 2) {
-                showErrorAndVibrate('⚠️ Debe seleccionar exactamente 2 combustibles para cocinar');
-            } else if (c5Validation.count > 2) {
-                showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 2 combustibles para cocinar');
-            }
-            return;
+if (currentSection === 3) {
+    const c5Validation = validateC5Selection();
+    if (!c5Validation.valid) {
+        if (c5Validation.count < 1) {
+            showErrorAndVibrate('⚠️ Debe seleccionar al menos 1 combustible para cocinar');
+        } else if (c5Validation.count > 2) {
+            showErrorAndVibrate('⚠️ Solo puede seleccionar máximo 2 combustibles para cocinar');
         }
+        return;
     }
+}
 if (currentSection === 6) {
     let selectedCount = 0;
     const d1Options = ['Sequía (ríos secos / mermante)', 'Lluvias irregulares', 'Inundaciones (crecientes)', 'Ola de calor', 'Incendios', 'Derrumbes', 'Ganancia agrícola inusualmente baja (mala cosecha)', 'Ganancia inusualmente baja de actividad económica no agrícola'];
@@ -1877,7 +1878,7 @@ setTimeout(() => {
     addTooltipToQuestion('M8', 'Seleccione la práctica principal que usa su familia');
     addTooltipToQuestion('B2', 'El nivel educativo del jefe de hogar');
     addTooltipToQuestion('B3', 'Años de estudio desde primaria hasta superior');
-    addTooltipToQuestion('C5', 'Seleccione EXACTAMENTE 2 combustibles principales que usa para cocinar');
+    addTooltipToQuestion('C5', 'Seleccione 1 o 2 combustibles principales que usa para cocinar');
     addTooltipToQuestion('D1', 'Seleccione máximo 3 impactos del cambio climático. Si selecciona 3, deberá ordenarlos');
     addTooltipToQuestion('F6', 'Seleccione hasta 2 enfermedades o lesiones principales');
     addTooltipToQuestion('F9', 'Seleccione máximo 3 síntomas. "Ninguno" excluye las demás opciones');
@@ -2157,7 +2158,7 @@ function buildFullSections() {
       { id:'C3', type:'yesno', text:'C3. ¿Su hogar tiene electricidad del sistema interconectado (red pública)?', skip:'Cuando la respuesta es afirmativa continue a C3.1, caso contrario pase a C4' },
       { id:'C3_1', type:'number', text:'C3.1. En caso sea afirmativo, ¿cuántas horas al día tiene electricidad su hogar en promedio? (horas)' },
       { id:'C4', type:'radio', text:'C4. Si no tiene electricidad, ¿cuál es la principal fuente de energía en su hogar?', options:['Carbón y leña','Energía solar','Gas','Otro'], hasOther: true },
-      { id:'C5', type:'checkbox', text:'C5. ¿Cuáles son los dos principales combustibles usados para cocinar? (Debe seleccionar EXACTAMENTE 2)', options:['Leña o carbón','Gas','Electricidad','Otro'], hasOther: true },
+      { id:'C5', type:'checkbox', text:'C5. ¿Cuáles son los dos principales combustibles usados para cocinar? (Debe seleccionar 1 o 2)', options:['Leña o carbón','Gas','Electricidad','Otro'], hasOther: true },
       { id:'C6', type:'number', text:'C6. ¿Cuántas habitaciones (cuartos) tiene?' },
       { id:'C7', type:'radio', text:'C7. Tipo de techo (observar)', options:['Vegetal o palma (Irapay/crisneja)','Hoja de motacu', 'Hoja de jatata', 'Calamina o zinc','Tejas de arcilla','Cemento','Otro'], hasOther: true },
       { id:'C8', type:'radio', text:'C8. Tipo de pared (observar)', options:['Madera','Ladrillo o cemento (material noble)','Adobe','Chuchio (tallos de chuchio cubierto con barro)','Otro'], hasOther: true },
