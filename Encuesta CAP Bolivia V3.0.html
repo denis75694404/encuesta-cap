@@ -1610,7 +1610,6 @@ function isRequiredField(id, type) {
   ]);
   if (explicit.has(id)) return true;
   if (conditionalRequired.has(id) && isVisible(id)) return true;
-  // CORRECCIÓN: I3, I4, I5 obligatorias si I1_2 está respondido
   if ((id === 'I3' || id === 'I4' || id === 'I5') && answers['I1_2'] !== undefined && answers['I1_2'] !== '') {
     return true;
   }
@@ -2017,7 +2016,6 @@ function processMultipleChoiceAnswers(record) {
         for (const key in processed) if (key.startsWith(`${questionId}_`)) delete processed[key];
     }
     
-    // Asegurar que D1_1 se guarde correctamente
     if (record['D1_1'] && record['D1_1'] !== '') {
         processed['D1_1'] = record['D1_1'];
     }
@@ -2076,7 +2074,38 @@ function allRecordsToCSV(records) {
 function downloadCSV(content,filename){ let BOM='\uFEFF'; let blob=new Blob([BOM+content],{type:'text/csv;charset=utf-8;'}); let url=URL.createObjectURL(blob); let a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 function exportOne(id){ let rec=getRecords().find(r=>r.id===id); if(rec) downloadCSV(recordToCSV(rec),`encuesta_cap_${id}.csv`); showToast('CSV descargado'); }
 function exportAllCSV(){ let records=getRecords(); if(!records.length){ showToast('No hay registros'); return; } downloadCSV(allRecordsToCSV(records),`encuestas_cap_bolivia_${Date.now()}.csv`); showToast(`${records.length} encuesta(s) exportada(s)`); }
-function switchTab(tab){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); if(tab==='survey'){ document.getElementById('tab-survey').classList.add('active'); document.getElementById('main-app').classList.remove('hidden'); document.getElementById('admin-screen').classList.add('hidden'); document.getElementById('complete-screen').classList.add('hidden'); } else { document.getElementById('tab-records').classList.add('active'); document.getElementById('main-app').classList.add('hidden'); document.getElementById('admin-screen').classList.remove('hidden'); document.getElementById('complete-screen').classList.add('hidden'); renderRecords(); } }
+
+function switchTab(tab){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    if(tab==='survey'){
+        // Reiniciar la encuesta completamente al volver a la pestaña Encuesta
+        resetI1TimerGlobal();
+        answers = {};
+        currentSection = 0;
+        editingId = null;
+        surveyFinished = false;
+        localStorage.removeItem('survey_progress');
+        document.getElementById('tab-survey').classList.add('active');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('admin-screen').classList.add('hidden');
+        document.getElementById('complete-screen').classList.add('hidden');
+        // Forzar recarga de geolocalización y renderizado
+        delete answers['ubicacion_lat'];
+        delete answers['ubicacion_lng'];
+        delete answers['ubicacion_precision'];
+        delete answers['ubicacion_direccion'];
+        delete answers['ubicacion_error'];
+        obtenerUbicacion();
+        renderSection();
+    } else {
+        document.getElementById('tab-records').classList.add('active');
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('admin-screen').classList.remove('hidden');
+        document.getElementById('complete-screen').classList.add('hidden');
+        renderRecords();
+    }
+}
+
 function showToast(msg){ let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
 updateConnectionStatus();
