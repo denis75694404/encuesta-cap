@@ -525,7 +525,7 @@ function showNativeAlert(message) {
 
 // ── Variables globales ──────────────────────────────────────────────────────
 let currentSection = 0, answers = {}, editingId = null;
-let surveyFinished = false; // CORRECCIÓN: flag para evitar doble guardado
+let surveyFinished = false;
 const TOTAL_SECTIONS = 11;
 const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
 
@@ -897,14 +897,6 @@ function nextSection() {
             return;
         }
     }
-    if (currentSection === 8 && i1AnswerSelected && !i1Locked) {
-        if (answers['I1_1'] && answers['I1_2']) {
-            showErrorAndVibrate('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
-            return;
-        }
-        showErrorAndVibrate('⏰ Por favor espera ' + i1TimeLeft + ' segundos para confirmar tu respuesta antes de continuar');
-        return;
-    }
     if (currentSection === 1) {
         const a4_1 = parseFloat(answers['A4_1']) || 0;
         const a4_2 = parseFloat(answers['A4_2']) || 0;
@@ -1057,7 +1049,7 @@ function returnToConsent() {
     answers = {};
     currentSection = 0;
     editingId = null;
-    surveyFinished = false; // CORRECCIÓN: resetear flag al volver al consentimiento
+    surveyFinished = false;
     resetI1TimerGlobal();
     localStorage.removeItem('survey_progress');
     const consentScreen = document.getElementById('consent-screen');
@@ -1563,8 +1555,8 @@ function isVisible(id) {
     case 'I1_2': return true;
     case 'I2': return a['I1_1'] !== undefined && a['I1_1'] !== '';
     case 'I3': return a['I1_2'] !== undefined && a['I1_2'] !== '';
-    case 'I4': return (a['I1_2'] !== undefined && a['I1_2'] !== '') && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
-    case 'I5': return (a['I1_2'] !== undefined && a['I1_2'] !== '') && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
+    case 'I4': return a['I1_2'] !== undefined && a['I1_2'] !== '' && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
+    case 'I5': return a['I1_2'] !== undefined && a['I1_2'] !== '' && a['I3'] === 'No hay instalaciones en el predio ni en la casa (pase a la I4)';
     case 'D1_1':
       const opcionesD1 = ['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios','Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola'];
       let haySeleccion = false;
@@ -1597,7 +1589,7 @@ function isRequiredField(id, type) {
     'H11_1','H11_2','H11_3','H11_4', 'H12_1','H12_2','H12_3','H12_4', 'H13_1','H13_2','H13_3','H13_4',
     'H15_1','H15_2','H15_3','H15_4', 'H16_1','H16_2','H16_3','H16_4', 'H17_1','H17_2','H17_3','H17_4',
     'H18_1','H18_2','H18_3','H18_4', 'H19_1','H19_2','H19_3','H19_4', 'H20_1','H20_2','H20_3','H20_4',
-    'I2','I3','I4','I5','A7',
+    'I2','A7',
   ]);
   const explicit = new Set([
     'S0_enc','S0_email','S0_cod','S0_zona','S0_dist',
@@ -1618,6 +1610,10 @@ function isRequiredField(id, type) {
   ]);
   if (explicit.has(id)) return true;
   if (conditionalRequired.has(id) && isVisible(id)) return true;
+  // CORRECCIÓN: I3, I4, I5 obligatorias si I1_2 está respondido
+  if ((id === 'I3' || id === 'I4' || id === 'I5') && answers['I1_2'] !== undefined && answers['I1_2'] !== '') {
+    return true;
+  }
   if (id === 'I1_1') return !answers['I1_2'];
   if (id === 'I1_2') return !answers['I1_1'];
   return false;
@@ -1918,7 +1914,6 @@ function getLocalTimestamp() {
     return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
 }
 
-// CORRECCIÓN: finishSurvey con flag para evitar doble guardado
 function finishSurvey() {
     if (surveyFinished) return;
     surveyFinished = true;
@@ -1936,7 +1931,6 @@ function showComplete(){
     resetI1TimerGlobal();
 }
 
-// CORRECCIÓN: newSurvey resetea el flag surveyFinished
 function newSurvey(){ 
     surveyFinished = false;
     answers={}; 
