@@ -985,6 +985,31 @@ if (currentSection === 6) {
         if (answers['I1_2'] === 'Otro' && answers['I1_2_otro'] && answers['I1_2_otro'].trim() !== '') {
             answers['I1_2'] = `Otro: ${answers['I1_2_otro'].trim()}`;
         }
+
+        // --- Nueva validación: si I1_1 está respondido, I2 es obligatorio ---
+        if (answers['I1_1'] && answers['I1_1'] !== '') {
+            const i2Value = answers['I2'];
+            if (!i2Value || i2Value === '' || i2Value === undefined) {
+                showErrorAndVibrate('⚠️ Al responder el Grupo A (Agua potable), debe especificar la disponibilidad diaria de agua (I2).');
+                // Opcional: marcar el campo I2 para que el usuario lo vea
+                const i2Block = document.querySelector('[data-qid="I2"]');
+                if (i2Block) {
+                    i2Block.classList.add('has-error');
+                    const input = i2Block.querySelector('input');
+                    if (input) input.classList.add('field-error');
+                }
+                return;
+            } else {
+                // Limpiar error si existe
+                const i2Block = document.querySelector('[data-qid="I2"]');
+                if (i2Block) {
+                    i2Block.classList.remove('has-error');
+                    const input = i2Block.querySelector('input');
+                    if (input) input.classList.remove('field-error');
+                }
+            }
+        }
+        // ----------------------------------------------------------------
     }
     const sections = buildFullSections();
     const sec = sections[currentSection];
@@ -1635,6 +1660,22 @@ function validateSection() {
     if (answers['I1_1'] && answers['I1_2']) {
       showErrorAndVibrate('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
       return false;
+    }
+    // Validación adicional para I2 si se respondió I1_1
+    if (answers['I1_1'] && answers['I1_1'] !== '') {
+        if (!answers['I2'] || answers['I2'] === '') {
+            showErrorAndVibrate('⚠️ Al responder el Grupo A (Agua potable), debe especificar la disponibilidad diaria de agua (I2).');
+            const i2Block = document.querySelector('[data-qid="I2"]');
+            if (i2Block) {
+                i2Block.classList.add('has-error');
+                const input = i2Block.querySelector('input');
+                if (input) input.classList.add('field-error');
+            }
+            return false;
+        } else {
+            const i2Block = document.querySelector('[data-qid="I2"]');
+            if (i2Block) i2Block.classList.remove('has-error');
+        }
     }
   }
   const errors = [];
