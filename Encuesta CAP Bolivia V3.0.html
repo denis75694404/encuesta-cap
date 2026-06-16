@@ -888,6 +888,31 @@ function updateD1OrderValue() {
     if (orderTextInput) orderTextInput.value = answers['D1_1'];
 }
 
+function validateConditionalSection(parentId, requiredIds, sectionName) {
+    if (answers[parentId] === 'Sí') {
+        for (let requiredId of requiredIds) {
+            if (!answers[requiredId] || answers[requiredId] === '' || answers[requiredId] === undefined) {
+                showErrorAndVibrate(`⚠️ Al responder "Sí" en ${parentId}, debe responder ${requiredId} (${sectionName}).`);
+                const reqBlock = document.querySelector(`[data-qid="${requiredId}"]`);
+                if (reqBlock) {
+                    reqBlock.classList.add('has-error');
+                    const input = reqBlock.querySelector('input');
+                    if (input) input.classList.add('field-error');
+                }
+                return false;
+            } else {
+                const reqBlock = document.querySelector(`[data-qid="${requiredId}"]`);
+                if (reqBlock) {
+                    reqBlock.classList.remove('has-error');
+                    const input = reqBlock.querySelector('input');
+                    if (input) input.classList.remove('field-error');
+                }
+            }
+        }
+    }
+    return true;
+}
+
 function nextSection() {
     if (currentSection === 1) {
         const a1Value = answers['A1'];
@@ -977,6 +1002,28 @@ if (currentSection === 6) {
                 return;
             }
         }
+        
+        // Validaciones para preguntas condicionales de la sección H
+        const conditionalValidations = [
+            { parent: 'H6_1', required: ['H6_2', 'H6_3', 'H6_4'], name: 'Formación en malaria o dengue' },
+            { parent: 'H7_1', required: ['H7_2', 'H7_3', 'H7_4'], name: 'Formación sobre cambio climático' },
+            { parent: 'H8_1', required: ['H8_2', 'H8_3', 'H8_4'], name: 'Visitas de trabajadores comunitarios de salud' },
+            { parent: 'H9_1', required: ['H9_2', 'H9_3', 'H9_4'], name: 'Programa de limpieza local' },
+            { parent: 'H10_1', required: ['H10_2', 'H10_3', 'H10_4'], name: 'Campaña local relacionada con limpieza de la comunidad' },
+            { parent: 'H11_1', required: ['H11_2', 'H11_3', 'H11_4'], name: 'Instalación de mosquiteros' },
+            { parent: 'H12_1', required: ['H12_2', 'H12_3', 'H12_4'], name: 'Fumigación o uso del abate' },
+            { parent: 'H13_1', required: ['H13_2', 'H13_3', 'H13_4'], name: 'Reunión comunitaria para debatir temas de salud, higiene o cambio climático' },
+            { parent: 'H15_1', required: ['H15_2', 'H15_3', 'H15_4'], name: 'Cooperativa agrícola' },
+            { parent: 'H16_1', required: ['H16_2', 'H16_3', 'H16_4'], name: 'Grupo de ahorro y crédito' },
+            { parent: 'H17_1', required: ['H17_2', 'H17_3', 'H17_4'], name: 'Grupo de mujeres (club de madres/vaso de leche)' },
+            { parent: 'H18_1', required: ['H18_2', 'H18_3', 'H18_4'], name: 'Grupo juvenil' },
+            { parent: 'H19_1', required: ['H19_2', 'H19_3', 'H19_4'], name: 'Comité de salud' },
+            { parent: 'H20_1', required: ['H20_2', 'H20_3', 'H20_4'], name: 'Grupo comunitario de limpieza' }
+        ];
+        
+        for (let val of conditionalValidations) {
+            if (!validateConditionalSection(val.parent, val.required, val.name)) return;
+        }
     }
     if (currentSection === 8) {
         if (answers['I1_1'] === 'Otro' && answers['I1_1_otro'] && answers['I1_1_otro'].trim() !== '') {
@@ -984,6 +1031,28 @@ if (currentSection === 6) {
         }
         if (answers['I1_2'] === 'Otro' && answers['I1_2_otro'] && answers['I1_2_otro'].trim() !== '') {
             answers['I1_2'] = `Otro: ${answers['I1_2_otro'].trim()}`;
+        }
+
+        // --- Nueva validación: si I1_1 está respondido, I2 es obligatorio ---
+        if (answers['I1_1'] && answers['I1_1'] !== '') {
+            const i2Value = answers['I2'];
+            if (!i2Value || i2Value === '' || i2Value === undefined) {
+                showErrorAndVibrate('⚠️ Al responder el Grupo A (Agua potable), debe especificar la disponibilidad diaria de agua (I2).');
+                const i2Block = document.querySelector('[data-qid="I2"]');
+                if (i2Block) {
+                    i2Block.classList.add('has-error');
+                    const input = i2Block.querySelector('input');
+                    if (input) input.classList.add('field-error');
+                }
+                return;
+            } else {
+                const i2Block = document.querySelector('[data-qid="I2"]');
+                if (i2Block) {
+                    i2Block.classList.remove('has-error');
+                    const input = i2Block.querySelector('input');
+                    if (input) input.classList.remove('field-error');
+                }
+            }
         }
     }
     const sections = buildFullSections();
@@ -1195,6 +1264,10 @@ function selectI1(id, val, el) {
     el.classList.add('selected');
     const radio = el.querySelector('input');
     if (radio) radio.checked = true;
+    
+    // --- Forzar re-renderizado para actualizar el asterisco de I2 ---
+    renderSection(true);
+    
     if (i1AnswerSelected) {
         resetI1Timer();
     } else {
@@ -1606,11 +1679,19 @@ function isRequiredField(id, type) {
   const conditionalRequired = new Set([
     'A3_1', 'B4_1', 'B6_1', 'B7_1', 'B13_1_2','B13_2_2','B13_3_2',
     'C3_1', 'M4','M5', 'F6','F7_1', 'F7_2','F8','F9','F10','F11','F12','F13',
-    'F18','F19', 'H2','D1_1'
+    'F18','F19', 'H2','D1_1', 'H6_2', 'H6_3', 'H6_4', 'H7_2', 'H7_3', 'H7_4',
+    'H8_2', 'H8_3', 'H8_4', 'H9_2', 'H9_3', 'H9_4', 'H10_2', 'H10_3', 'H10_4',
+    'H11_2', 'H11_3', 'H11_4', 'H12_2', 'H12_3', 'H12_4', 'H13_2', 'H13_3', 'H13_4',
+    'H15_2', 'H15_3', 'H15_4', 'H16_2', 'H16_3', 'H16_4', 'H17_2', 'H17_3', 'H17_4',
+    'H18_2', 'H18_3', 'H18_4', 'H19_2', 'H19_3', 'H19_4', 'H20_2', 'H20_3', 'H20_4'
   ]);
   if (explicit.has(id)) return true;
   if (conditionalRequired.has(id) && isVisible(id)) return true;
   if ((id === 'I3' || id === 'I4' || id === 'I5') && answers['I1_2'] !== undefined && answers['I1_2'] !== '') {
+    return true;
+  }
+  // --- NUEVA REGLA: I2 es obligatorio cuando I1_1 está respondido ---
+  if (id === 'I2' && answers['I1_1'] !== undefined && answers['I1_1'] !== '') {
     return true;
   }
   if (id === 'I1_1') return !answers['I1_2'];
@@ -1635,6 +1716,22 @@ function validateSection() {
     if (answers['I1_1'] && answers['I1_2']) {
       showErrorAndVibrate('⚠️ Solo puede responder Grupo A o Grupo B en I1, no ambos');
       return false;
+    }
+    // Validación adicional para I2 si se respondió I1_1
+    if (answers['I1_1'] && answers['I1_1'] !== '') {
+        if (!answers['I2'] || answers['I2'] === '') {
+            showErrorAndVibrate('⚠️ Al responder el Grupo A (Agua potable), debe especificar la disponibilidad diaria de agua (I2).');
+            const i2Block = document.querySelector('[data-qid="I2"]');
+            if (i2Block) {
+                i2Block.classList.add('has-error');
+                const input = i2Block.querySelector('input');
+                if (input) input.classList.add('field-error');
+            }
+            return false;
+        } else {
+            const i2Block = document.querySelector('[data-qid="I2"]');
+            if (i2Block) i2Block.classList.remove('has-error');
+        }
     }
   }
   const errors = [];
