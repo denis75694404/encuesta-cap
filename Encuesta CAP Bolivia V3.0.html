@@ -1882,6 +1882,7 @@ function renderQuestion(q){
 }
 
 function renderSection(keepScroll = false) { 
+  saveProgress();
   const scrollY = keepScroll ? window.scrollY : 0;
   updateProgress(); 
   let el = document.getElementById('main'); 
@@ -2194,7 +2195,25 @@ function switchTab(tab){
 function showToast(msg){ let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
 updateConnectionStatus();
-
+// ── Restaurar sesión al cargar la página ─────────────────────────────────
+(function restoreSession() {
+  const saved = localStorage.getItem('survey_progress');
+  if (!saved) return;
+  try {
+    const progress = JSON.parse(saved);
+    // Solo restaurar si hay respuestas y consentimiento aceptado
+    if (!progress.answers || progress.answers.consent !== 'Acepto') return;
+    currentSection = progress.currentSection || 0;
+    answers = progress.answers;
+    document.getElementById('consent-screen').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    document.getElementById('tab-bar').style.display = 'flex';
+    renderSection();
+    showToast('📂 Sesión restaurada automáticamente');
+  } catch(e) {
+    console.error('Error restaurando sesión:', e);
+  }
+})();
 const shortcutsHint = document.createElement('div');
 shortcutsHint.className = 'shortcuts-hint';
 document.body.appendChild(shortcutsHint);
