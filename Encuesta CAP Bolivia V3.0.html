@@ -1264,6 +1264,10 @@ function selectI1(id, val, el) {
     el.classList.add('selected');
     const radio = el.querySelector('input');
     if (radio) radio.checked = true;
+    
+    // --- Forzar re-renderizado para actualizar el asterisco de I2 ---
+    renderSection(true);
+    
     if (i1AnswerSelected) {
         resetI1Timer();
     } else {
@@ -1684,6 +1688,10 @@ function isRequiredField(id, type) {
   if (explicit.has(id)) return true;
   if (conditionalRequired.has(id) && isVisible(id)) return true;
   if ((id === 'I3' || id === 'I4' || id === 'I5') && answers['I1_2'] !== undefined && answers['I1_2'] !== '') {
+    return true;
+  }
+  // --- NUEVA REGLA: I2 es obligatorio cuando I1_1 está respondido ---
+  if (id === 'I2' && answers['I1_1'] !== undefined && answers['I1_1'] !== '') {
     return true;
   }
   if (id === 'I1_1') return !answers['I1_2'];
