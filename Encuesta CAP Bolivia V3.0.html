@@ -2175,24 +2175,11 @@ function exportAllCSV(){ let records=getRecords(); if(!records.length){ showToas
 function switchTab(tab){
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     if(tab==='survey'){
-        // Reiniciar la encuesta completamente al volver a la pestaña Encuesta
-        resetI1TimerGlobal();
-        answers = {};
-        currentSection = 0;
-        editingId = null;
-        surveyFinished = false;
-        localStorage.removeItem('survey_progress');
         document.getElementById('tab-survey').classList.add('active');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('admin-screen').classList.add('hidden');
         document.getElementById('complete-screen').classList.add('hidden');
-        // Forzar recarga de geolocalización y renderizado
-        delete answers['ubicacion_lat'];
-        delete answers['ubicacion_lng'];
-        delete answers['ubicacion_precision'];
-        delete answers['ubicacion_direccion'];
-        delete answers['ubicacion_error'];
-        obtenerUbicacion();
+        // NO reiniciar la encuesta, solo mostrar la vista actual
         renderSection();
     } else {
         document.getElementById('tab-records').classList.add('active');
