@@ -634,46 +634,74 @@ async function verificarUbicacionDuplicada() {
   let latA = parseFloat(answers['ubicacion_lat'] ?? '');
   let lngA = parseFloat(answers['ubicacion_lng'] ?? '');
   const txtA = (answers['S0_ubic'] || answers['ubicacion_direccion'] || '').trim();
-  if ((isNaN(latA) || isNaN(lngA)) && txtA) {
-    const mCoord = txtA.match(/(?:Lat:\s*)?(-?\d+\.\d+)[,\s]+(?:Lng:\s*)?(-?\d+\.\d+)/);
-    if (mCoord) { latA = parseFloat(mCoord[1]); lngA = parseFloat(mCoord[2]); }
-  }
-  const tieneGPS = !isNaN(latA) && !isNaN(lngA);
-  if (!tieneGPS && txtA.length < 6) return;
-  showToast('🔍 Verificando si esta ubicación ya fue encuestada…');
-  const datos = await fetchCSVData();
-  if (!datos || !datos.length) return;
-  const getCol = (row, cols) => { for (const c of cols) if (row[c] !== undefined && row[c] !== '') return row[c]; return ''; };
-  const COL_LAT  = ['ubicacion_lat','Ubicación - Latitud','Ubicación – Latitud'];
-  const COL_LNG  = ['ubicacion_lng','Ubicación - Longitud','Ubicación – Longitud'];
-  const COL_UBIC = ['S0_ubic','ubicacion_manual','Ubicación:','Ubicación Google Maps (manual)'];
-  const COL_TS   = ['timestamp','Fecha y hora'];
-  const COL_ENC  = ['S0_enc','Nombre del encuestador:'];
-  const COL_COM  = ['A2','Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano'];
-  const COL_ZONA = ['S0_zona'];
-  const COL_DIST = ['S0_dist'];
-  const duplicados = [];
-  for (const row of datos) {
-    let latF = parseFloat(getCol(row, COL_LAT)), lngF = parseFloat(getCol(row, COL_LNG));
-    if (isNaN(latF) || isNaN(lngF)) {
-      const combinado = getCol(row, COL_UBIC);
-      const match = combinado.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
-      if (match) { latF = parseFloat(match[1]); lngF = parseFloat(match[2]); }
-    }
-    const txtF = getCol(row, COL_UBIC);
-    let esDup = false, razon = '';
-    if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
-      const metros = _haversine(latA, lngA, latF, lngF);
-      if (metros <= 20) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
-    }
-    if (!esDup && txtA && txtF && txtA.length > 5 && txtF.length > 5) {
-      const sim = _similTexto(txtA, txtF);
-      if (sim >= 0.40) { esDup = true; razon = '🔤 Texto: ' + Math.round(sim*100) + '% de coincidencia'; }
-    }
-    if (esDup && getCol(row, COL_TS)) {
-      duplicados.push({ ts: getCol(row, COL_TS), enc: getCol(row, COL_ENC), com: getCol(row, COL_COM), zona: getCol(row, COL_ZONA), dist: getCol(row, COL_DIST), razon });
+if ((isNaN(latA) || isNaN(lngA)) && txtA) {
+    // Formato Google Maps: "-10.9876, -65.4321"
+    const mCoord = txtA.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+    if (mCoord) {
+      const cLat = parseFloat(mCoord[1]);
+      const cLng = parseFloat(mCoord[2]);
+      // Validar rangos geográficos válidos
+      if (cLat >= -90 && cLat <= 90 && cLng >= -180 && cLng <= 180) {
+        latA = cLat;
+        lngA = cLng;
+      }
     }
   }
+const tieneGPS = !isNaN(latA) && !isNaN(lngA);
+if (!tieneGPS && txtA.length < 6) return;
+showToast('🔍 Verificando si esta ubicación ya fue encuestada…');
+const datos = await fetchCSVData();
+if (!datos || !datos.length) return;
+const getCol = (row, cols) => { for (const c of cols) if (row[c] !== undefined && row[c] !== '') return row[c]; return ''; };
+const COL_LAT  = ['ubicacion_lat','Ubicación - Latitud','Ubicación – Latitud'];
+const COL_LNG  = ['ubicacion_lng','Ubicación - Longitud','Ubicación – Longitud'];
+const COL_UBIC = ['S0_ubic','ubicacion_manual','Ubicación:','Ubicación Google Maps (manual)'];
+const COL_TS   = ['timestamp','Fecha y hora'];
+const COL_ENC  = ['S0_enc','Nombre del encuestador:'];
+const COL_COM  = ['A2','Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano'];
+const COL_ZONA = ['S0_zona'];
+const COL_DIST = ['S0_dist'];
+const duplicados = [];
+for (const row of datos) {
+  let latF = parseFloat(getCol(row, COL_LAT)), lngF = parseFloat(getCol(row, COL_LNG));
+  // Intentar extraer coordenadas del texto de ubicación del CSV
+  const txtF = getCol(row, COL_UBIC);
+  if (isNaN(latF) || isNaN(lngF)) {
+    const formats = [
+      txtF.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/),
+      txtF.match(/(?:Lat:\s*)?(-?\d+\.\d+)[,\s]+(?:Lng:\s*)?(-?\d+\.\d+)/),
+      txtF.match(/lat[:\s]+(-?\d+\.\d+)[\s,]+(?:lng|lon)[:\s]+(-?\d+\.\d+)/i)
+    ];
+    for (const m of formats) {
+      if (m) { latF = parseFloat(m[1]); lngF = parseFloat(m[2]); break; }
+    }
+  }
+  let esDup = false, razon = '';
+  // Comparar GPS contra GPS (incluye cuando el encuestador pegó coords en el campo manual)
+  if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
+    const metros = _haversine(latA, lngA, latF, lngF);
+    if (metros <= 20) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
+  }
+  // Comparar GPS actual contra texto del CSV (por si el CSV tiene solo texto)
+  if (!esDup && tieneGPS && txtF && txtF.length > 5) {
+    const mTxt = txtF.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+    if (mTxt) {
+      const latTxt = parseFloat(mTxt[1]), lngTxt = parseFloat(mTxt[2]);
+      if (!isNaN(latTxt) && !isNaN(lngTxt)) {
+        const metros = _haversine(latA, lngA, latTxt, lngTxt);
+        if (metros <= 20) { esDup = true; razon = '📍 Coords en texto: a ' + Math.round(metros) + ' m'; }
+      }
+    }
+  }
+  // Comparar texto contra texto como último recurso
+  if (!esDup && txtA && txtF && txtA.length > 5 && txtF.length > 5) {
+    const sim = _similTexto(txtA, txtF);
+    if (sim >= 0.40) { esDup = true; razon = '🔤 Texto: ' + Math.round(sim*100) + '% de coincidencia'; }
+  }
+  if (esDup && getCol(row, COL_TS)) {
+    duplicados.push({ ts: getCol(row, COL_TS), enc: getCol(row, COL_ENC), com: getCol(row, COL_COM), zona: getCol(row, COL_ZONA), dist: getCol(row, COL_DIST), razon });
+  }
+}
   if (duplicados.length > 0) _mostrarAlertaDuplicadosUbic(duplicados);
 }
 
