@@ -854,7 +854,7 @@ async function verificarUbicacionDuplicada() {
         let esDup = false, razon = '';
         if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
             const metros = _haversine(latA, lngA, latF, lngF);
-            if (metros <= 5) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
+            if (metros <= 20) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
         }
         if (!esDup && txtA && txtF) {
             const sim = _similTexto(txtA, txtF);
