@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -177,14 +176,14 @@
     justify-content: center;
     font-weight: bold;
   }
-  input[type="text"], input[type="number"], textarea, select {
+  input[type="text"], input[type="number"], textarea {
     width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
     border-radius: var(--radius-sm); font-family: 'Sora', sans-serif;
     font-size: 14px; background: var(--cream); color: var(--text-dark);
     transition: border-color 0.2s, box-shadow 0.2s;
     -webkit-appearance: none;
   }
-  input:focus, select:focus { outline: none; border-color: var(--green-light); box-shadow: 0 0 0 3px rgba(45,184,112,0.15); }
+  input:focus { outline: none; border-color: var(--green-light); box-shadow: 0 0 0 3px rgba(45,184,112,0.15); }
   input[type="number"] { max-width: 140px; }
   .options-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
   .option-item {
@@ -421,6 +420,188 @@
     pointer-events: none;
     z-index: 1000;
   }
+
+  /* Estilos para la alerta de duplicado */
+  .duplicate-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 36px 16px;
+    z-index: 20000;
+    backdrop-filter: blur(5px);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  .duplicate-alert-content {
+    background: white;
+    border-radius: 18px;
+    padding: 24px 20px 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.32);
+    box-sizing: border-box;
+    animation: fadeSlide 0.22s ease-out;
+  }
+  .duplicate-alert-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .duplicate-alert-header .icon-bg {
+    background: #fef2f2;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .duplicate-alert-header h3 {
+    font-weight: 800;
+    font-size: 16px;
+    color: #dc2626;
+    margin: 0;
+  }
+  .duplicate-alert-header .sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  .duplicate-record {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    border-radius: 10px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+  }
+  .duplicate-record .time {
+    font-weight: 700;
+    font-size: 13px;
+    color: #92400e;
+  }
+  .duplicate-record .detail {
+    font-size: 12px;
+    margin-top: 3px;
+  }
+  .duplicate-record .extra {
+    font-size: 11px;
+    color: #6b7280;
+  }
+  .duplicate-record .reason {
+    font-size: 11px;
+    color: #b45309;
+    background: rgba(245,158,11,0.12);
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .duplicate-alert-warning {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 12px;
+    color: #991b1b;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .duplicate-alert-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .duplicate-alert-buttons .btn-continue {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .duplicate-alert-buttons .btn-continue:active { transform: scale(0.98); }
+  .duplicate-alert-buttons .btn-review {
+    background: #f9fafb;
+    color: #374151;
+    border: 1.5px solid #d1d5db;
+    padding: 12px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .duplicate-alert-buttons .btn-review:active { transform: scale(0.98); }
+  .duplicate-records-list {
+    max-height: 260px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    border: 1px solid #f3f4f6;
+    padding: 4px;
+  }
+
+  .duplicate-alert {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.65);
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 36px 16px; z-index: 20000; backdrop-filter: blur(5px);
+    overflow-y: auto; box-sizing: border-box;
+  }
+  .duplicate-alert-content {
+    background: white; border-radius: 18px; padding: 24px 20px 20px;
+    width: 100%; max-width: 400px; box-shadow: 0 16px 48px rgba(0,0,0,0.32);
+    box-sizing: border-box; animation: fadeSlide 0.22s ease-out;
+  }
+  .duplicate-alert-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .duplicate-alert-header .icon-bg {
+    background: #fef2f2; border-radius: 50%; width: 52px; height: 52px; min-width: 52px;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .duplicate-alert-header h3 { font-weight: 800; font-size: 16px; color: #dc2626; margin: 0; }
+  .duplicate-alert-header .sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .duplicate-record {
+    background: #fffbeb; border-left: 4px solid #f59e0b;
+    border-radius: 10px; padding: 11px 14px; margin-bottom: 8px;
+  }
+  .duplicate-record .time { font-weight: 700; font-size: 13px; color: #92400e; }
+  .duplicate-record .detail { font-size: 12px; margin-top: 3px; }
+  .duplicate-record .extra { font-size: 11px; color: #6b7280; }
+  .duplicate-record .reason {
+    font-size: 11px; color: #b45309; background: rgba(245,158,11,0.12);
+    padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 4px;
+  }
+  .duplicate-alert-warning {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 11px 13px; font-size: 12px; color: #991b1b; margin-bottom: 18px; line-height: 1.55;
+  }
+  .duplicate-alert-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .duplicate-alert-buttons .btn-continue {
+    background: #dc2626; color: white; border: none; padding: 14px;
+    border-radius: 30px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .duplicate-alert-buttons .btn-continue:active { transform: scale(0.98); }
+  .duplicate-alert-buttons .btn-review {
+    background: #f9fafb; color: #374151; border: 1.5px solid #d1d5db; padding: 12px;
+    border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .duplicate-alert-buttons .btn-review:active { transform: scale(0.98); }
+  .duplicate-records-list {
+    max-height: 260px; overflow-y: auto; margin-bottom: 14px;
+    border-radius: 10px; border: 1px solid #f3f4f6; padding: 4px;
+  }
 </style>
 </head>
 <body>
@@ -536,6 +717,212 @@ let i1Locked = false;
 let i1AnswerSelected = false;
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoF4CS9MwNHZ7xpejCOgaU_j7wTFZ1lfohOV3u46FDSJPP_bh8MjGsDwbUoq5U-IkL/exec";
+
+// === VERIFICACIÓN DE UBICACIÓN DUPLICADA ===
+const CSV_URL_DUPLICADOS = "https://script.google.com/macros/s/AKfycbypTvpNB0GafPHPgYp1mEAlE0do-D2QO2Xlfxq9CED7FE0uoec0SsdX8Q-F5WYJOfek4g/exec";
+let _csvCache = null;
+let _csvLastFetched = null;
+let _ubicVerifTimer = null;
+
+async function fetchCSVData() {
+    const CACHE_MS = 5 * 60 * 1000;
+    const ahora = Date.now();
+    if (_csvCache && _csvLastFetched && (ahora - _csvLastFetched < CACHE_MS)) return _csvCache;
+
+    let text = null;
+    try {
+        const resp = await fetch(CSV_URL_DUPLICADOS + '?nocache=' + ahora);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        text = await resp.text();
+    } catch(e) {
+        console.warn('[DupUbic] Fetch falló:', e.message);
+    }
+
+    if (!text) {
+        if (typeof showToast === 'function')
+            showToast('⚠️ No se pudo verificar duplicados (sin conexión o sin datos)');
+        return null;
+    }
+
+    _csvCache = _parseCSV(text);
+    _csvLastFetched = ahora;
+    return _csvCache;
+}
+
+function _parseCSV(text) {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    const headers = _parseCSVLine(lines[0]);
+    return lines.slice(1).map(line => {
+        const vals = _parseCSVLine(line);
+        const row = {};
+        headers.forEach((h, i) => { row[h.trim()] = (vals[i] || '').trim(); });
+        return row;
+    });
+}
+
+function _parseCSVLine(line) {
+    const out = []; let inQ = false; let cur = '';
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+            if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+        } else if (ch === ',' && !inQ) { out.push(cur); cur = ''; }
+        else cur += ch;
+    }
+    out.push(cur);
+    return out;
+}
+
+function _haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function _similTexto(a, b) {
+    if (!a || !b) return 0;
+    const tok = s => new Set(
+        s.toLowerCase()
+         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+         .replace(/[^a-z0-9\s]/g, '')
+         .split(/\s+/).filter(w => w.length > 2)
+    );
+    const sA = tok(a), sB = tok(b);
+    if (!sA.size || !sB.size) return 0;
+    const inter = [...sA].filter(w => sB.has(w)).length;
+    return inter / new Set([...sA, ...sB]).size;
+}
+
+async function verificarUbicacionDuplicada() {
+    let latA = parseFloat(answers['ubicacion_lat'] ?? '');
+    let lngA = parseFloat(answers['ubicacion_lng'] ?? '');
+    const txtA = (answers['S0_ubic'] || answers['ubicacion_direccion'] || '').trim();
+
+    // Extraer coordenadas del texto si no hay GPS directo
+    // Formatos: "-10.905652, -65.282193" o "Lat: -10.905652, Lng: -65.282193"
+    if (isNaN(latA) || isNaN(lngA)) {
+        const mCoord = txtA.match(/(?:Lat:\s*)?(-?\d+\.\d+)[,\s]+(?:Lng:\s*)?(-?\d+\.\d+)/);
+        if (mCoord) {
+            latA = parseFloat(mCoord[1]);
+            lngA = parseFloat(mCoord[2]);
+        }
+    }
+    const tieneGPS = !isNaN(latA) && !isNaN(lngA);
+    if (!tieneGPS && txtA.length < 6) return;
+
+    if (typeof showToast === 'function')
+        showToast('🔍 Verificando si esta ubicación ya fue encuestada…');
+
+    const datos = await fetchCSVData();
+    if (!datos || !datos.length) return;
+
+    const getCol = (row, cols) => {
+        for (const c of cols) if (row[c] !== undefined && row[c] !== '') return row[c];
+        return '';
+    };
+    const COL_LAT  = ['ubicacion_lat', 'Ubicación - Latitud', 'Ubicación \u2013 Latitud'];
+    const COL_LNG  = ['ubicacion_lng', 'Ubicación - Longitud', 'Ubicación \u2013 Longitud'];
+    const COL_UBIC = ['S0_ubic', 'ubicacion_manual', 'Ubicación:', 'Ubicación Google Maps (manual)'];
+    const COL_TS   = ['timestamp', 'Fecha y hora'];
+    const COL_ENC  = ['S0_enc', 'Nombre del encuestador:'];
+    const COL_COM  = ['A2', 'Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano'];
+    const COL_ZONA = ['S0_zona'];
+    const COL_DIST = ['S0_dist'];
+
+    const duplicados = [];
+    for (const row of datos) {
+        let latF = parseFloat(getCol(row, COL_LAT));
+        let lngF = parseFloat(getCol(row, COL_LNG));
+
+        // Si columnas separadas vacías, extraer del campo combinado
+        if (isNaN(latF) || isNaN(lngF)) {
+            const combinado = getCol(row, COL_UBIC);
+            const match = combinado.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+            if (match) {
+                latF = parseFloat(match[1]);
+                lngF = parseFloat(match[2]);
+            }
+        }
+
+        const txtF = getCol(row, COL_UBIC);
+        let esDup = false, razon = '';
+        if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
+            const metros = _haversine(latA, lngA, latF, lngF);
+            if (metros <= 5) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
+        }
+        if (!esDup && txtA && txtF) {
+            const sim = _similTexto(txtA, txtF);
+            if (sim >= 0.40) { esDup = true; razon = '🔤 Texto: ' + Math.round(sim*100) + '% de coincidencia'; }
+        }
+        if (esDup && getCol(row, COL_TS)) {
+            duplicados.push({
+                ts: getCol(row, COL_TS),
+                enc: getCol(row, COL_ENC),
+                com: getCol(row, COL_COM),
+                zona: getCol(row, COL_ZONA),
+                dist: getCol(row, COL_DIST),
+                razon
+            });
+        }
+    }
+
+    if (duplicados.length > 0) {
+        _mostrarAlertaDuplicados(duplicados);
+    }
+}
+
+
+function _mostrarAlertaDuplicados(duplicados) {
+    const prev = document.getElementById('cap-alerta-dup');
+    if (prev) prev.remove();
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate([250, 100, 250]);
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cap-alerta-dup';
+    overlay.className = 'duplicate-alert';
+
+    const filas = duplicados.map(d => {
+        const meta = [d.zona, d.dist].filter(Boolean).join(' · ');
+        return `<div class="duplicate-record">
+          <div class="time">🕐 ${d.ts}</div>
+          ${d.enc ? `<div class="detail">👤 ${d.enc}</div>` : ''}
+          ${d.com ? `<div class="detail">🏘️ ${d.com}</div>` : ''}
+          ${meta ? `<div class="extra">📌 ${meta}</div>` : ''}
+          <span class="reason">${d.razon}</span>
+        </div>`;
+    }).join('');
+
+    overlay.innerHTML = `
+      <div class="duplicate-alert-content">
+        <div class="duplicate-alert-header">
+          <div class="icon-bg">⚠️</div>
+          <div>
+            <h3>Ubicación ya registrada</h3>
+            <div class="sub">${duplicados.length} encuesta(s) previa(s) en este lugar</div>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Registros encontrados:</div>
+        <div class="duplicate-records-list">${filas}</div>
+        <div class="duplicate-alert-warning">
+          ⚠️ Verifique que no está duplicando una encuesta ya registrada.<br>
+          Si es una <strong>vivienda diferente</strong>, puede continuar normalmente.
+        </div>
+        <div class="duplicate-alert-buttons">
+          <button class="btn-continue" onclick="document.getElementById('cap-alerta-dup').remove()">✔ Entendido — continuar de todos modos</button>
+          <button class="btn-review" onclick="document.getElementById('cap-alerta-dup').remove();window.scrollTo({top:0,behavior:'smooth'})">← Volver y revisar la ubicación</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+}
 
 function vibrateOnError() {
   if (window.navigator && window.navigator.vibrate) {
@@ -1164,6 +1551,16 @@ function updateProgress() {
 }
 
 function setAnswer(id,val) { 
+    // === VERIFICACIÓN DE UBICACIÓN DUPLICADA (manual) ===
+    if (id === 'S0_ubic' && val.trim().length > 5) {
+        clearTimeout(_ubicVerifTimer);
+        _ubicVerifTimer = setTimeout(() => verificarUbicacionDuplicada(), 900);
+    }
+    if (id === 'ubicacion_lat' || id === 'ubicacion_lng') {
+        clearTimeout(_ubicVerifTimer);
+        _ubicVerifTimer = setTimeout(() => verificarUbicacionDuplicada(), 1200);
+    }
+    
     answers[id]=val; 
     if (id.endsWith('_otro')) {
         const inputElement = document.querySelector(`#other_input_${id.replace('_otro', '')}`);
@@ -1806,6 +2203,8 @@ function obtenerUbicacion() {
                             answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
                         }
                         showToast('✅ Ubicación GPS capturada automáticamente');
+                        // === VERIFICACIÓN DE UBICACIÓN DUPLICADA (GPS) ===
+                        setTimeout(() => verificarUbicacionDuplicada(), 600);
                         renderSection();
                     })
                     .catch(err => {
@@ -1840,6 +2239,7 @@ function obtenerUbicacion() {
     }
 }
 
+
 function getCommunityOptions() {
     const municipio = answers['S0_dist'] || '';
     const comunidades = {
@@ -1856,7 +2256,6 @@ function updateA2Options() {
     
     const options = getCommunityOptions();
     if (options.length === 0) {
-        // Si no hay opciones, mostrar un mensaje
         const currentValue = answers['A2'] || '';
         a2Block.innerHTML = `
             <div class="question-label">A2. Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano <span class="required-mark">*</span></div>
@@ -1866,31 +2265,26 @@ function updateA2Options() {
         return;
     }
     
-    // Construir opciones como radio buttons
     let html = `<div class="question-label">A2. Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano <span class="required-mark">*</span></div>
                 <div class="hint">ℹ️ Seleccione la comunidad correspondiente al municipio elegido</div>
                 <div class="options-list">`;
     
-    // Agregar opción para "Otro" en caso de que no esté en la lista
     const allOptions = [...options, 'Otro'];
     
     allOptions.forEach(opt => {
         const sel = answers['A2'] === opt ? 'selected' : '';
-        const isOther = opt === 'Otro';
         html += `<label class="option-item ${sel}" onclick="selectRadio('A2','${escHtml(opt)}',this)">`;
         html += `<input type="radio" name="A2" ${answers['A2'] === opt ? 'checked' : ''}><span class="option-text">${opt}</span>`;
         html += `</label>`;
     });
     html += `</div>`;
     
-    // Agregar input para "Otro" si está seleccionado
     const isOtherSelected = answers['A2'] === 'Otro';
     const otherVal = answers['A2_otro'] || '';
     html += `<input type="text" id="other_input_A2" class="other-input ${isOtherSelected ? 'visible' : ''}" placeholder="Especifique otro..." value="${escHtml(otherVal)}" oninput="setAnswer('A2_otro',this.value); if(this.value.trim()!==''){ setAnswer('A2','Otro'); }">`;
     
     a2Block.innerHTML = html;
     
-    // Actualizar estado de "Otro"
     const otherInput = document.getElementById('other_input_A2');
     if (otherInput) {
         if (isOtherSelected) {
@@ -1909,7 +2303,6 @@ function renderQuestion(q){
   let html=`<div class="question-label">${q.text}${isReq ? '<span class="required-mark">*</span>' : ''}</div>`;
   if(q.hint) html+=`<div class="hint">ℹ️ ${q.hint}</div>`;
   if(q.skip) html+=`<div class="skip-note">⚠️ ${q.skip.replace(/\|/g, '<br>')}</div>`;
-  
   // Caso especial para S0_dist (municipio) - usar select
   if (q.id === 'S0_dist') {
       html += `<select onchange="setAnswer('${q.id}',this.value)">`;
@@ -1923,7 +2316,6 @@ function renderQuestion(q){
   }
   // Caso especial para A2 - se maneja con updateA2Options()
   else if (q.id === 'A2') {
-      // Se renderiza con updateA2Options después
       block.innerHTML = html;
       setTimeout(() => updateA2Options(), 0);
       return block;
@@ -2039,6 +2431,9 @@ setTimeout(() => {
   const currentSec = sectionsList[currentSection];
   if (currentSec) {
     currentSec.questions.forEach(q => {
+      if (q.id === 'A2') {
+        updateA2Options();
+      }
       if ((q.type === 'radio' || q.type === 'yesno' || q.type === 'yesno3') && q.hasOther) {
         const otherInput = document.getElementById(`other_input_${q.id}`);
         if (otherInput) {
@@ -2052,10 +2447,6 @@ setTimeout(() => {
           if (answers[`${q.id}_Otro`] === true) otherInput.classList.add('visible');
           else otherInput.classList.remove('visible');
         }
-      }
-      // Actualizar A2 si es necesario
-      if (q.id === 'A2') {
-        updateA2Options();
       }
     });
     updateSectionProgress();
@@ -2315,7 +2706,7 @@ function buildFullSections() {
     ]},
     { icon:'👥', title:'Sección A. Demografía', questions:[
       { id:'A1', type:'number', text:'A1. ¿Cuántos años llevas viviendo en la comunidad? (años)', skip:'Si es un año o menos, finaliza la encuesta, y avanza a la siguiente vivienda según el salto (k)' },
-      { id:'A2', type:'radio', text:'A2. Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano', options:[] },
+      { id:'A2', type:'text', text:'A2. Nombre de la comunidad, pueblo, barrio (OTBS) o asentamiento humano' },
       { id:'A3', type:'yesno', text:'A3. ¿Perteneces a una comunidad indígena?', skip:'Cuando la respuesta es afirmativa continue a A3.1, caso contrario pase a A4' },
       { id:'A3_1', type:'text', text:'A3.1. Si es afirmativo ¿A qué comunidad?' },
       { id:'subtitle_a4', type:'subtitle', text:'<strong>A4. Cantidad de personas en el hogar</strong>' },
