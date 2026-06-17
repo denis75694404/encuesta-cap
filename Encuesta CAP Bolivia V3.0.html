@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -719,24 +718,32 @@ let i1AnswerSelected = false;
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoF4CS9MwNHZ7xpejCOgaU_j7wTFZ1lfohOV3u46FDSJPP_bh8MjGsDwbUoq5U-IkL/exec";
 
-// === VERIFICACIÓN DE UBICACIÓN DUPLICADA ===
+// === VERIFICACIÓN DE UBICACIÓN DUPLICADA - CORREGIDO ===
 const CSV_URL_DUPLICADOS = "https://script.google.com/macros/s/AKfycbypTvpNB0GafPHPgYp1mEAlE0do-D2QO2Xlfxq9CED7FE0uoec0SsdX8Q-F5WYJOfek4g/exec";
 let _csvCache = null;
 let _csvLastFetched = null;
-let _ubicVerifTimer = null;
+// ✅ Timers separados para GPS y manual
+let _ubicVerifTimerGPS = null;
+let _ubicVerifTimerManual = null;
 
+// ✅ fetchCSVData con reintentos
 async function fetchCSVData() {
     const CACHE_MS = 5 * 60 * 1000;
     const ahora = Date.now();
     if (_csvCache && _csvLastFetched && (ahora - _csvLastFetched < CACHE_MS)) return _csvCache;
 
     let text = null;
-    try {
-        const resp = await fetch(CSV_URL_DUPLICADOS + '?nocache=' + ahora);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        text = await resp.text();
-    } catch(e) {
-        console.warn('[DupUbic] Fetch falló:', e.message);
+    // Reintentar hasta 2 veces con delay entre intentos
+    for (let intento = 0; intento < 2; intento++) {
+        try {
+            if (intento > 0) await new Promise(r => setTimeout(r, 1500));
+            const resp = await fetch(CSV_URL_DUPLICADOS + '?nocache=' + Date.now());
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            text = await resp.text();
+            if (text && text.trim().length > 0) break;
+        } catch(e) {
+            console.warn(`[DupUbic] Intento ${intento + 1} falló:`, e.message);
+        }
     }
 
     if (!text) {
@@ -746,7 +753,7 @@ async function fetchCSVData() {
     }
 
     _csvCache = _parseCSV(text);
-    _csvLastFetched = ahora;
+    _csvLastFetched = Date.now();
     return _csvCache;
 }
 
@@ -799,25 +806,28 @@ function _similTexto(a, b) {
     return inter / new Set([...sA, ...sB]).size;
 }
 
+// ✅ verificarUbicacionDuplicada corregida - lee directamente de answers
 async function verificarUbicacionDuplicada() {
+    // Leer siempre directo de answers, sin parsear texto
     let latA = parseFloat(answers['ubicacion_lat'] ?? '');
     let lngA = parseFloat(answers['ubicacion_lng'] ?? '');
     const txtA = (answers['S0_ubic'] || answers['ubicacion_direccion'] || '').trim();
 
-    // Extraer coordenadas del texto si no hay GPS directo
-    // Formatos: "-10.905652, -65.282193" o "Lat: -10.905652, Lng: -65.282193"
-    if (isNaN(latA) || isNaN(lngA)) {
+    // Solo intentar extraer del texto si realmente no hay GPS en answers
+    if ((isNaN(latA) || isNaN(lngA)) && txtA) {
         const mCoord = txtA.match(/(?:Lat:\s*)?(-?\d+\.\d+)[,\s]+(?:Lng:\s*)?(-?\d+\.\d+)/);
         if (mCoord) {
             latA = parseFloat(mCoord[1]);
             lngA = parseFloat(mCoord[2]);
         }
     }
+    
     const tieneGPS = !isNaN(latA) && !isNaN(lngA);
+    
+    // Requerir al menos 6 caracteres de texto O coordenadas GPS válidas
     if (!tieneGPS && txtA.length < 6) return;
 
-    if (typeof showToast === 'function')
-        showToast('🔍 Verificando si esta ubicación ya fue encuestada…');
+    showToast('🔍 Verificando si esta ubicación ya fue encuestada…');
 
     const datos = await fetchCSVData();
     if (!datos || !datos.length) return;
@@ -840,7 +850,6 @@ async function verificarUbicacionDuplicada() {
         let latF = parseFloat(getCol(row, COL_LAT));
         let lngF = parseFloat(getCol(row, COL_LNG));
 
-        // Si columnas separadas vacías, extraer del campo combinado
         if (isNaN(latF) || isNaN(lngF)) {
             const combinado = getCol(row, COL_UBIC);
             const match = combinado.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
@@ -852,11 +861,14 @@ async function verificarUbicacionDuplicada() {
 
         const txtF = getCol(row, COL_UBIC);
         let esDup = false, razon = '';
+        
+        // Verificación GPS tiene prioridad
         if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
             const metros = _haversine(latA, lngA, latF, lngF);
             if (metros <= 20) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
         }
-        if (!esDup && txtA && txtF) {
+        // Verificación por texto solo si no hubo match por GPS
+        if (!esDup && txtA && txtF && txtA.length > 5 && txtF.length > 5) {
             const sim = _similTexto(txtA, txtF);
             if (sim >= 0.40) { esDup = true; razon = '🔤 Texto: ' + Math.round(sim*100) + '% de coincidencia'; }
         }
@@ -1551,18 +1563,17 @@ function updateProgress() {
   prevBtn.style.display = 'flex';
 }
 
-function setAnswer(id,val) { 
-    // === VERIFICACIÓN DE UBICACIÓN DUPLICADA (manual) ===
+// ✅ setAnswer corregido - timers separados
+function setAnswer(id, val) { 
+    // Timer SEPARADO para campo manual de ubicación
     if (id === 'S0_ubic' && val.trim().length > 5) {
-        clearTimeout(_ubicVerifTimer);
-        _ubicVerifTimer = setTimeout(() => verificarUbicacionDuplicada(), 900);
+        clearTimeout(_ubicVerifTimerManual);
+        _ubicVerifTimerManual = setTimeout(() => verificarUbicacionDuplicada(), 900);
     }
-    if (id === 'ubicacion_lat' || id === 'ubicacion_lng') {
-        clearTimeout(_ubicVerifTimer);
-        _ubicVerifTimer = setTimeout(() => verificarUbicacionDuplicada(), 1200);
-    }
+    // Las coordenadas GPS ya NO usan timer aquí — se verifican directamente en obtenerUbicacion
+    // (se eliminan las líneas de ubicacion_lat / ubicacion_lng que cancelaban el timer)
     
-    answers[id]=val; 
+    answers[id] = val; 
     if (id.endsWith('_otro')) {
         const inputElement = document.querySelector(`#other_input_${id.replace('_otro', '')}`);
         if (inputElement && val.trim() !== '') {
@@ -2181,6 +2192,7 @@ function validateSection() {
   return true;
 }
 
+// ✅ obtenerUbicacion corregida - guarda coordenadas y llama verificación DESPUÉS
 function obtenerUbicacion() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -2189,10 +2201,13 @@ function obtenerUbicacion() {
                 const lng = posicion.coords.longitude;
                 const precision = posicion.coords.accuracy;
                 const urlGeo = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+                
+                // ✅ Guardar coordenadas PRIMERO antes de cualquier verificación
                 answers['ubicacion_lat'] = lat;
                 answers['ubicacion_lng'] = lng;
                 answers['ubicacion_precision'] = precision;
                 delete answers['ubicacion_manual'];
+                
                 fetch(urlGeo)
                     .then(resp => resp.json())
                     .then(data => {
@@ -2204,14 +2219,19 @@ function obtenerUbicacion() {
                             answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
                         }
                         showToast('✅ Ubicación GPS capturada automáticamente');
-                        // === VERIFICACIÓN DE UBICACIÓN DUPLICADA (GPS) ===
-                        setTimeout(() => verificarUbicacionDuplicada(), 600);
                         renderSection();
+                        // ✅ Llamar verificación DESPUÉS de que todo esté guardado en answers
+                        // Usar timer separado para GPS
+                        clearTimeout(_ubicVerifTimerGPS);
+                        _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
                     })
                     .catch(err => {
                         answers['ubicacion_direccion'] = `Lat: ${lat}, Lng: ${lng}`;
                         answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
                         renderSection();
+                        // ✅ Verificar también en caso de error de geocodificación inversa
+                        clearTimeout(_ubicVerifTimerGPS);
+                        _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
                     });
             },
             function(error) {
