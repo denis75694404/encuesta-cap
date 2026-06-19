@@ -689,7 +689,7 @@ for (const row of datos) {
       const latTxt = parseFloat(mTxt[1]), lngTxt = parseFloat(mTxt[2]);
       if (!isNaN(latTxt) && !isNaN(lngTxt)) {
         const metros = _haversine(latA, lngA, latTxt, lngTxt);
-        if (metros <= 20) { esDup = true; razon = '📍 Coords en texto: a ' + Math.round(metros) + ' m'; }
+        if (metros <= 5) { esDup = true; razon = '📍 Coords en texto: a ' + Math.round(metros) + ' m'; }
       }
     }
   }
