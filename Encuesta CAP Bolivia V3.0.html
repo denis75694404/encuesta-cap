@@ -680,7 +680,7 @@ for (const row of datos) {
   // Comparar GPS contra GPS (incluye cuando el encuestador pegó coords en el campo manual)
   if (tieneGPS && !isNaN(latF) && !isNaN(lngF)) {
     const metros = _haversine(latA, lngA, latF, lngF);
-    if (metros <= 20) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
+    if (metros <= 5) { esDup = true; razon = '📍 GPS: a ' + Math.round(metros) + ' m de distancia'; }
   }
   // Comparar GPS actual contra texto del CSV (por si el CSV tiene solo texto)
   if (!esDup && tieneGPS && txtF && txtF.length > 5) {
