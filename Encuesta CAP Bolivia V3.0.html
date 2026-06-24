@@ -355,6 +355,7 @@ window.alert = function(message) { customAlert(message); };
 // ── Variables globales ──────────────────────────────────────────────────────
 let currentSection = 0, answers = {}, editingId = null;
 let surveyFinished = false;
+let autoSaveTimer = null;
 const TOTAL_SECTIONS = 11;
 const SECTION_NAMES = ['Sec.0','Sec.A','Sec.B','Sec.C','Sec.M','Sec.F','Sec.D','Sec.H','Sec.I','Sec.G','Sec.E'];
 
@@ -758,25 +759,108 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 's'          && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!document.getElementById('consent-screen').classList.contains('hidden')) return; saveProgress(); }
 });
 
-function saveProgress() {
-  const progress = { currentSection, answers, timestamp: new Date().toISOString() };
-  localStorage.setItem('survey_progress', JSON.stringify(progress));
-  showToast('✅ Progreso guardado. Puedes continuar después');
+// ── GUARDADO AUTOMÁTICO ──────────────────────────────────────────────────────
+
+function autoSaveProgress() {
+  if (document.getElementById('consent-screen').classList.contains('hidden') && 
+      !document.getElementById('complete-screen').classList.contains('hidden') === false) {
+    const progress = { currentSection, answers, timestamp: new Date().toISOString() };
+    localStorage.setItem('survey_progress', JSON.stringify(progress));
+    // Mostrar indicador sutil de guardado automático (opcional)
+    const btn = document.querySelector('.save-progress-btn');
+    if (btn) {
+      btn.textContent = '💾✓';
+      setTimeout(() => { btn.textContent = '💾'; }, 800);
+    }
+  }
 }
+
+function startAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+  autoSaveTimer = setInterval(autoSaveProgress, 15000); // Cada 15 segundos
+}
+
+function stopAutoSave() {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+}
+
+// ── Sobrescribir setAnswer para que guarde automáticamente ──────────────
+const originalSetAnswer = setAnswer;
+setAnswer = function(id, val) {
+  originalSetAnswer(id, val);
+  // Guardar automáticamente después de cada respuesta
+  setTimeout(autoSaveProgress, 200);
+};
+
+// También sobrescribir funciones de selección para que disparen auto-guardado
+const originalSelectRadio = selectRadio;
+selectRadio = function(id, val, el) {
+  originalSelectRadio(id, val, el);
+  setTimeout(autoSaveProgress, 200);
+};
+
+const originalToggleCheck = toggleCheck;
+toggleCheck = function(id, val, el) {
+  originalToggleCheck(id, val, el);
+  setTimeout(autoSaveProgress, 200);
+};
+
+const originalSetLikert = setLikert;
+setLikert = function(id, val, el) {
+  originalSetLikert(id, val, el);
+  setTimeout(autoSaveProgress, 200);
+};
+
+// ── Cargar progreso automáticamente ──────────────────────────────────────
 
 function loadProgress() {
   const saved = localStorage.getItem('survey_progress');
   if (saved) {
-    const progress = JSON.parse(saved);
-    if (confirm('¿Deseas continuar donde lo dejaste?')) {
-      currentSection = progress.currentSection;
-      answers = progress.answers;
-      renderSection();
-      showToast('Progreso cargado exitosamente');
-      return true;
-    } else { localStorage.removeItem('survey_progress'); }
+    try {
+      const progress = JSON.parse(saved);
+      if (progress.answers && Object.keys(progress.answers).length > 0) {
+        // Verificar si el progreso es reciente (menos de 1 hora)
+        const ahora = Date.now();
+        const ts = new Date(progress.timestamp).getTime();
+        if (ahora - ts < 3600000) { // 1 hora de validez
+          if (confirm('📌 ¿Deseas continuar donde lo dejaste? (Último guardado: ' + new Date(ts).toLocaleTimeString() + ')')) {
+            currentSection = progress.currentSection;
+            answers = progress.answers;
+            renderSection();
+            showToast('✅ Progreso cargado exitosamente');
+            startAutoSave();
+            return true;
+          } else {
+            localStorage.removeItem('survey_progress');
+          }
+        } else {
+          // Progreso antiguo, preguntar si quiere cargar o empezar de nuevo
+          if (confirm('⚠️ El progreso guardado tiene más de 1 hora. ¿Deseas cargarlo de todas formas?')) {
+            currentSection = progress.currentSection;
+            answers = progress.answers;
+            renderSection();
+            showToast('✅ Progreso cargado (antiguo)');
+            startAutoSave();
+            return true;
+          } else {
+            localStorage.removeItem('survey_progress');
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('Error al cargar progreso:', e);
+      localStorage.removeItem('survey_progress');
+    }
   }
   return false;
+}
+
+function saveProgress() {
+  autoSaveProgress();
+  showToast('✅ Progreso guardado manualmente. Puedes continuar después');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -840,7 +924,15 @@ function acceptConsent() {
   delete answers['ubicacion_precision']; delete answers['ubicacion_direccion'];
   delete answers['ubicacion_error'];
   const loaded = loadProgress();
-  if (!loaded) { obtenerUbicacion(); renderSection(); }
+  if (!loaded) { 
+    obtenerUbicacion(); 
+    renderSection(); 
+    startAutoSave(); // Iniciar auto-guardado
+  } else {
+    // Si se cargó progreso, el auto-guardado ya se inició en loadProgress
+    // Pero por si acaso
+    if (!autoSaveTimer) startAutoSave();
+  }
 }
 
 function rejectConsent() { showToast('Encuesta rechazada – avanza a la siguiente vivienda según el salto (k=5 casas)'); }
@@ -1058,6 +1150,7 @@ function returnToConsent() {
     let records = getRecords(); records.push(partialAnswers); localStorage.setItem('cap_records', JSON.stringify(records));
   } catch(e) { console.log('Error guardando respuesta parcial:', e); }
   answers = {}; currentSection = 0; editingId = null; surveyFinished = false; resetI1TimerGlobal();
+  stopAutoSave(); // Detener auto-guardado al salir
   localStorage.removeItem('survey_progress');
   document.getElementById('main-app').classList.add('hidden');
   document.getElementById('complete-screen').classList.add('hidden');
@@ -1114,6 +1207,8 @@ function setAnswer(id, val) {
   if (id === 'B3') setTimeout(() => validateB3InRealTime(), 100);
   if (id === 'A6' || id === 'A8') checkSameSex();
   if (id === 'S0_dist') { setTimeout(() => updateA2Options(), 50); delete answers['A2']; renderSection(true); }
+  
+  // Auto-guardado ya se dispara desde la función sobrescrita
 }
 
 function enforceMaxSelections(questionId, maxSelections) {
@@ -1149,6 +1244,7 @@ function selectI1(id, val, el) {
   if (radio) radio.checked = true;
   renderSection(true);
   if (i1AnswerSelected) resetI1Timer(); else { i1AnswerSelected = true; startI1Timer(); }
+  autoSaveProgress(); // Guardar después de seleccionar
 }
 
 function startI1Timer() {
@@ -1210,6 +1306,7 @@ function selectRadio(id, val, el) {
   const conditionalParents = ['A3','A8','B4','B6','B7','B13_1_1','B13_2_1','B13_3_1','C3','M3','F5','F7_1','F7_2','F17','H1','H5','H14','H6_1','H7_1','H8_1','H9_1','H10_1','H11_1','H12_1','H13_1','H15_1','H16_1','H17_1','H18_1','H19_1','H20_1','I1_1','I1_2','I3','H15_3','H16_3','H17_3','H18_3','H19_3','H20_3'];
   if (conditionalParents.includes(id) && previousValue !== val) renderSection(true);
   if (id === 'A6' || id === 'A8') checkSameSex();
+  autoSaveProgress(); // Guardar después de seleccionar
 }
 
 function toggleCheck(id, val, el) {
@@ -1240,9 +1337,16 @@ function toggleCheck(id, val, el) {
   if (id === 'F6') setTimeout(() => enforceMaxSelections('F6', 2), 50);
   if (id === 'F9') setTimeout(() => enforceMaxSelections('F9', 3), 50);
   if (id === 'F9' || id === 'D1') renderSection(true);
+  autoSaveProgress(); // Guardar después de seleccionar
 }
 
-function setLikert(id, val, el) { answers[id]=val; let wrap=el.closest('.likert-wrap'); if(wrap) wrap.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+function setLikert(id, val, el) { 
+  answers[id]=val; 
+  let wrap=el.closest('.likert-wrap'); 
+  if(wrap) wrap.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected')); 
+  el.classList.add('selected');
+  autoSaveProgress(); // Guardar después de seleccionar
+}
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function addTooltipToQuestion(questionId, tooltipText) {
@@ -1431,11 +1535,13 @@ function obtenerUbicacion() {
           renderSection();
           clearTimeout(_ubicVerifTimerGPS);
           _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
+          autoSaveProgress(); // Guardar después de obtener ubicación
         }).catch(err => {
           answers['ubicacion_direccion'] = `Lat: ${lat}, Lng: ${lng}`; answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
           renderSection();
           clearTimeout(_ubicVerifTimerGPS);
           _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
+          autoSaveProgress();
         });
       },
       function(error) {
@@ -1606,12 +1712,13 @@ function finishSurvey() {
   answers.timestamp = getLocalTimestamp();
   answers.id = editingId || Date.now().toString();
   saveRecord(answers);
+  stopAutoSave(); // Detener auto-guardado al finalizar
   localStorage.removeItem('survey_progress');
   showComplete();
 }
 
 function showComplete() { document.getElementById('main-app').classList.add('hidden'); document.getElementById('complete-screen').classList.remove('hidden'); editingId = null; resetI1TimerGlobal(); }
-function newSurvey() { surveyFinished=false; answers={}; currentSection=0; resetI1TimerGlobal(); localStorage.removeItem('survey_progress'); document.getElementById('complete-screen').classList.add('hidden'); document.getElementById('consent-screen').classList.remove('hidden'); document.getElementById('main-app').classList.add('hidden'); }
+function newSurvey() { surveyFinished=false; answers={}; currentSection=0; resetI1TimerGlobal(); stopAutoSave(); localStorage.removeItem('survey_progress'); document.getElementById('complete-screen').classList.add('hidden'); document.getElementById('consent-screen').classList.remove('hidden'); document.getElementById('main-app').classList.add('hidden'); }
 function getRecords() { try { return JSON.parse(localStorage.getItem('cap_records')||'[]'); } catch(e) { return []; } }
 function saveRecord(rec) { let records=getRecords(); let idx=records.findIndex(r=>r.id===rec.id); let recordToSave={...rec}; if(idx>=0) records[idx]=recordToSave; else records.push(recordToSave); localStorage.setItem('cap_records',JSON.stringify(records)); }
 function deleteRecord(id) { let records=getRecords().filter(r=>r.id!==id); localStorage.setItem('cap_records',JSON.stringify(records)); }
@@ -1712,6 +1819,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (tab === 'survey') {
     resetI1TimerGlobal(); answers={}; currentSection=0; editingId=null; surveyFinished=false;
+    stopAutoSave();
     localStorage.removeItem('survey_progress');
     document.getElementById('tab-survey').classList.add('active');
     document.getElementById('main-app').classList.remove('hidden');
@@ -1720,6 +1828,7 @@ function switchTab(tab) {
     delete answers['ubicacion_lat']; delete answers['ubicacion_lng'];
     delete answers['ubicacion_precision']; delete answers['ubicacion_direccion']; delete answers['ubicacion_error'];
     obtenerUbicacion(); renderSection();
+    startAutoSave();
   } else {
     document.getElementById('tab-records').classList.add('active');
     document.getElementById('main-app').classList.add('hidden');
