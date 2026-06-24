@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Encuesta CAP">
-<!-- ELIMINADO: <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"> -->
-<!-- ELIMINADO: <meta http-equiv="Pragma" content="no-cache"> -->
-<!-- ELIMINADO: <meta http-equiv="Expires" content="0"> -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Encuesta CAP – Malaria & Dengue Bolivia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -261,23 +261,10 @@
   .dup-local-btn-enviar:active { transform: scale(0.98); }
   .dup-local-btn-cancelar { background: #f9fafb; color: #374151; border: 1.5px solid #d1d5db; padding: 12px; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; }
   .dup-local-btn-cancelar:active { transform: scale(0.98); }
-  
-  /* ── Indicador de auto-guardado ── */
-  #auto-save-indicator {
-    position: fixed; bottom: 80px; right: 16px;
-    background: var(--green-deep); color: white;
-    padding: 6px 14px; border-radius: 20px;
-    font-size: 11px; font-weight: 600;
-    opacity: 0; transition: opacity 0.3s;
-    pointer-events: none; z-index: 300;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-  }
-  #auto-save-indicator.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="toast"></div>
-<div id="auto-save-indicator">💾 Guardando...</div>
 <div id="consent-screen">
   <div class="consent-logo">🦟</div>
   <h1 class="consent-title">Encuesta de conocimientos, actitudes y prácticas (CAP) sobre el combate a la malaria y el dengue en comunidades en un contexto de cambio climático</h1>
@@ -382,26 +369,13 @@ let _csvCache = null;
 let _csvLastFetched = null;
 let _ubicVerifTimerGPS = null;
 let _ubicVerifTimerManual = null;
-let autoSaveTimeoutId = null;
-let saveIndicatorTimeout = null;
+let autoSaveTimeoutId = null; // ← NUEVO
 
-// ── INDICADOR DE AUTO-GUARDADO ────────────────────────────────────────────
-
-function showAutoSaveIndicator() {
-  const el = document.getElementById('auto-save-indicator');
-  if (!el) return;
-  el.classList.add('show');
-  clearTimeout(saveIndicatorTimeout);
-  saveIndicatorTimeout = setTimeout(() => {
-    el.classList.remove('show');
-  }, 800);
-}
-
-// ── GUARDADO AUTOMÁTICO (VERSIÓN MÓVIL) ──────────────────────────────────
+// ── AUTO-GUARDADO (NUEVO) ──────────────────────────────────────────────────
 
 function autoSaveProgress() {
   if (document.getElementById('consent-screen').classList.contains('hidden') && 
-      !document.getElementById('complete-screen').classList.contains('hidden') === false) {
+      document.getElementById('complete-screen').classList.contains('hidden')) {
     const progress = { 
       currentSection, 
       answers: JSON.parse(JSON.stringify(answers)), 
@@ -409,58 +383,43 @@ function autoSaveProgress() {
     };
     try {
       localStorage.setItem('survey_progress', JSON.stringify(progress));
-      showAutoSaveIndicator();
-    } catch(e) {
-      // Si falla localStorage, intentar guardar en sessionStorage como respaldo
-      try {
-        sessionStorage.setItem('survey_progress_backup', JSON.stringify(progress));
-      } catch(e2) { /* ignora */ }
-    }
+    } catch(e) { /* ignora errores de almacenamiento */ }
   }
 }
 
-// ── Guardado al perder el foco (cuando el usuario cambia de campo) ──────
-
+// Guardar al perder el foco (cuando el usuario cambia de campo)
 document.addEventListener('focusout', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
     setTimeout(autoSaveProgress, 100);
   }
 });
 
-// ── Guardado al cambiar de pestaña / minimizar la app ────────────────────
-
+// Guardar al cambiar de pestaña / minimizar la app
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'hidden') {
     autoSaveProgress();
   }
 });
 
-// ── Guardado al cerrar la página (beforeunload) ──────────────────────────
-
+// Guardar al cerrar la página
 window.addEventListener('beforeunload', function(e) {
   autoSaveProgress();
-  // En móviles, esto ayuda a que se guarde antes de cerrar
 });
 
-// ── Guardado al hacer clic en "Siguiente" (ya existe, pero forzamos guardado) ──
-
-// Sobrescribir nextSection para que guarde ANTES de cambiar
+// Guardar al hacer clic en "Siguiente" y "Atrás" (sobrescribir)
 const originalNextSection = nextSection;
 nextSection = function() {
-  // Guardar antes de validar y cambiar
   autoSaveProgress();
   originalNextSection();
 };
 
-// También en prevSection
 const originalPrevSection = prevSection;
 prevSection = function() {
   autoSaveProgress();
   originalPrevSection();
 };
 
-// ── Sobrescribir funciones de respuesta para guardar ─────────────────────
-
+// Sobrescribir funciones de respuesta para guardar
 const originalSetAnswer = setAnswer;
 setAnswer = function(id, val) {
   originalSetAnswer(id, val);
@@ -485,55 +444,10 @@ setLikert = function(id, val, el) {
   autoSaveProgress();
 };
 
-// ── Cargar progreso (con soporte para respaldo) ──────────────────────────
-
-function loadProgress() {
-  // Intentar cargar desde localStorage primero
-  let saved = localStorage.getItem('survey_progress');
-  let progress = null;
-  
-  if (saved) {
-    try {
-      progress = JSON.parse(saved);
-    } catch(e) { progress = null; }
-  }
-  
-  // Si no hay en localStorage, intentar desde sessionStorage (respaldo)
-  if (!progress || !progress.answers || Object.keys(progress.answers).length === 0) {
-    const backup = sessionStorage.getItem('survey_progress_backup');
-    if (backup) {
-      try {
-        progress = JSON.parse(backup);
-        // Restaurar a localStorage si encontramos backup válido
-        if (progress && progress.answers && Object.keys(progress.answers).length > 0) {
-          localStorage.setItem('survey_progress', JSON.stringify(progress));
-        }
-      } catch(e) { progress = null; }
-    }
-  }
-  
-  if (progress && progress.answers && Object.keys(progress.answers).length > 0) {
-    if (confirm('📌 ¿Deseas continuar donde lo dejaste? (Último guardado: ' + new Date(progress.timestamp).toLocaleString() + ')')) {
-      currentSection = progress.currentSection || 0;
-      answers = progress.answers || {};
-      renderSection();
-      showToast('✅ Progreso cargado exitosamente');
-      return true;
-    } else {
-      localStorage.removeItem('survey_progress');
-      sessionStorage.removeItem('survey_progress_backup');
-    }
-  }
-  return false;
-}
-
-function saveProgress() {
-  autoSaveProgress();
-  showToast('✅ Progreso guardado manualmente. Puedes continuar después');
-}
+// ── FIN AUTO-GUARDADO ──────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ── VERIFICACIÓN DE DUPLICADOS LOCALES ────────────────────────────────────
+// ── VERIFICACIÓN DE DUPLICADOS LOCALES (NUEVA) ────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
 
 const DUP_IGNORAR = new Set([
@@ -909,6 +823,27 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 's'          && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!document.getElementById('consent-screen').classList.contains('hidden')) return; saveProgress(); }
 });
 
+function saveProgress() {
+  const progress = { currentSection, answers, timestamp: new Date().toISOString() };
+  localStorage.setItem('survey_progress', JSON.stringify(progress));
+  showToast('✅ Progreso guardado. Puedes continuar después');
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('survey_progress');
+  if (saved) {
+    const progress = JSON.parse(saved);
+    if (confirm('¿Deseas continuar donde lo dejaste?')) {
+      currentSection = progress.currentSection;
+      answers = progress.answers;
+      renderSection();
+      showToast('Progreso cargado exitosamente');
+      return true;
+    } else { localStorage.removeItem('survey_progress'); }
+  }
+  return false;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ── ENVÍO A GOOGLE SHEETS ────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
@@ -963,27 +898,131 @@ function acceptConsent() {
   delete answers['ubicacion_precision']; delete answers['ubicacion_direccion'];
   delete answers['ubicacion_error'];
   const loaded = loadProgress();
-  if (!loaded) { 
-    obtenerUbicacion(); 
-    renderSection(); 
-  }
+  if (!loaded) { obtenerUbicacion(); renderSection(); }
 }
 
 function rejectConsent() { showToast('Encuesta rechazada – avanza a la siguiente vivienda según el salto (k=5 casas)'); }
+function prevSection() { if(currentSection > 0){ currentSection--; renderSection(); scrollToTop(); } }
 
-function prevSection() { 
-  if(currentSection > 0){ 
-    autoSaveProgress();
-    currentSection--; 
-    renderSection(); 
-    scrollToTop(); 
-  } 
+function validateB3Value() {
+  const b2Value = answers['B2'], b3Value = parseInt(answers['B3']);
+  if (b2Value === undefined || b3Value === undefined || isNaN(b3Value)) return { valid: true, message: '' };
+  switch(b2Value) {
+    case 'No tiene educación': case 'No sabe': if (b3Value !== 0) return { valid: false, message: 'Para "No tiene educación" o "No sabe", B3 debe ser igual a 0' }; break;
+    case 'Primaria incompleta': if (b3Value >= 6) return { valid: false, message: 'Para "Primaria incompleta", B3 debe ser menor a 6' }; break;
+    case 'Primaria completa': if (b3Value !== 6) return { valid: false, message: 'Para "Primaria completa", B3 debe ser igual a 6' }; break;
+    case 'Secundaria incompleta': if (b3Value <= 6) return { valid: false, message: 'Para "Secundaria incompleta", B3 debe ser mayor a 6' }; break;
+    case 'Secundaria completa': if (b3Value !== 12) return { valid: false, message: 'Para "Secundaria completa", B3 debe ser igual a 12' }; break;
+    case 'Superior técnico completo': case 'Superior técnico incompleto': case 'Superior universitaria completa': case 'Superior universitaria incompleta':
+      if (b3Value <= 12) return { valid: false, message: 'Para educación superior, B3 debe ser mayor a 12' }; break;
+  }
+  return { valid: true, message: '' };
+}
+
+function validateB3InRealTime() {
+  const validation = validateB3Value();
+  const b3Input = document.querySelector('[data-qid="B3"] input');
+  const b3Block = document.querySelector('[data-qid="B3"]');
+  if (b3Input) {
+    if (!validation.valid) {
+      b3Input.classList.add('field-error');
+      if (b3Block) b3Block.classList.add('has-error');
+      let errorSpan = b3Input.parentElement.querySelector('.b3-error-msg');
+      if (!errorSpan) { errorSpan = document.createElement('div'); errorSpan.className = 'error-msg b3-error-msg'; b3Input.parentElement.appendChild(errorSpan); }
+      errorSpan.textContent = '⚠️ ' + validation.message;
+    } else {
+      b3Input.classList.remove('field-error');
+      if (b3Block) b3Block.classList.remove('has-error');
+      const errorSpan = b3Input.parentElement.querySelector('.b3-error-msg');
+      if (errorSpan) errorSpan.remove();
+    }
+  }
+  return validation.valid;
+}
+
+function validateC5Selection() {
+  const c5Options = ['Leña o carbón','Gas','Electricidad','Otro'];
+  let count = 0;
+  for (let opt of c5Options) { if (answers[`C5_${opt}`] === true) count++; }
+  if (count < 1 || count > 2) return { valid: false, count };
+  return { valid: true, count };
+}
+
+function checkSameSex() {
+  const a6 = answers['A6'], a8 = answers['A8'];
+  if (a6 && a8 && a6 === a8 && a8 !== 'No tiene cónyuge') { showToast('⚠️ Atención: El sexo del jefe de hogar y del cónyuge son iguales. Por favor verifique.'); vibrateOnError(); }
+}
+
+let d1SelectedImpacts = [];
+
+function updateD1OrderUI() {
+  const selectedOptions = [];
+  const d1OptionsList = ['Sequía (ríos secos / mermante)','Lluvias irregulares','Inundaciones (crecientes)','Ola de calor','Incendios','Derrumbes','Ganancia agrícola inusualmente baja (mala cosecha)','Ganancia inusualmente baja de actividad económica no agrícola'];
+  for (let opt of d1OptionsList) { if (answers[`D1_${opt}`] === true) selectedOptions.push(opt); }
+  if (answers['D1_Otro'] === true && answers['D1_otro'] && answers['D1_otro'].trim() !== '') selectedOptions.push(`Otro: ${answers['D1_otro']}`);
+  d1SelectedImpacts = selectedOptions;
+  const numImpacts = selectedOptions.length;
+  const orderContainer = document.getElementById('d1-order-container');
+  if (orderContainer) {
+    if (numImpacts >= 1 && numImpacts <= 3) {
+      orderContainer.classList.remove('hidden');
+      const orderRadiosDiv = document.getElementById('d1-order-radios');
+      if (orderRadiosDiv) {
+        orderRadiosDiv.innerHTML = '';
+        for (let i = 0; i < numImpacts; i++) {
+          const posicion = i === 0 ? 'Primer impacto (1°)' : (i === 1 ? 'Segundo impacto (2°)' : 'Tercer impacto (3°)');
+          const orderItem = document.createElement('div');
+          orderItem.className = 'order-item';
+          orderItem.innerHTML = `<span style="font-weight:600;min-width:130px;">${posicion}:</span><select class="order-select" data-position="${i}" onchange="updateD1OrderValue()"><option value="">Seleccione...</option>${selectedOptions.map(opt => `<option value="${opt.replace(/"/g,'&quot;')}">${opt}</option>`).join('')}</select>`;
+          orderRadiosDiv.appendChild(orderItem);
+        }
+        if (answers['D1_order_1'] && numImpacts >= 1) { const s = orderRadiosDiv.querySelector('.order-select[data-position="0"]'); if (s) s.value = answers['D1_order_1'] || ''; }
+        if (answers['D1_order_2'] && numImpacts >= 2) { const s = orderRadiosDiv.querySelector('.order-select[data-position="1"]'); if (s) s.value = answers['D1_order_2'] || ''; }
+        if (answers['D1_order_3'] && numImpacts >= 3) { const s = orderRadiosDiv.querySelector('.order-select[data-position="2"]'); if (s) s.value = answers['D1_order_3'] || ''; }
+        updateD1OrderValue();
+      }
+    } else {
+      orderContainer.classList.add('hidden');
+      delete answers['D1_order_1']; delete answers['D1_order_2']; delete answers['D1_order_3'];
+      answers['D1_1'] = '';
+      const orderTextInput = document.getElementById('d1_order_text');
+      if (orderTextInput) orderTextInput.value = '';
+    }
+  }
+}
+
+function updateD1OrderValue() {
+  const selects = document.querySelectorAll('#d1-order-radios .order-select');
+  delete answers['D1_order_1']; delete answers['D1_order_2']; delete answers['D1_order_3'];
+  selects.forEach((sel, i) => { if (sel && sel.value && sel.value !== '') answers[`D1_order_${i+1}`] = sel.value; });
+  const orderParts = [];
+  for (let i = 0; i < selects.length; i++) {
+    const value = answers[`D1_order_${i+1}`];
+    if (value && value !== '') orderParts.push((i===0?'1°':i===1?'2°':'3°') + '. ' + value);
+  }
+  answers['D1_1'] = orderParts.join(', ');
+  const orderTextInput = document.getElementById('d1_order_text');
+  if (orderTextInput) orderTextInput.value = answers['D1_1'];
+}
+
+function validateConditionalSection(parentId, requiredIds, sectionName) {
+  if (answers[parentId] === 'Sí') {
+    for (let requiredId of requiredIds) {
+      if (!answers[requiredId] || answers[requiredId] === '' || answers[requiredId] === undefined) {
+        showErrorAndVibrate(`⚠️ Al responder "Sí" en ${parentId}, debe responder ${requiredId} (${sectionName}).`);
+        const reqBlock = document.querySelector(`[data-qid="${requiredId}"]`);
+        if (reqBlock) { reqBlock.classList.add('has-error'); const input = reqBlock.querySelector('input'); if (input) input.classList.add('field-error'); }
+        return false;
+      } else {
+        const reqBlock = document.querySelector(`[data-qid="${requiredId}"]`);
+        if (reqBlock) { reqBlock.classList.remove('has-error'); const input = reqBlock.querySelector('input'); if (input) input.classList.remove('field-error'); }
+      }
+    }
+  }
+  return true;
 }
 
 function nextSection() {
-  // Guardar antes de validar
-  autoSaveProgress();
-  
   if (currentSection === 1) {
     const a1Value = answers['A1'];
     if (a1Value !== undefined && a1Value !== '' && parseInt(a1Value) <= 1) { showErrorAndVibrate('❌ Tiempo de residencia ≤ 1 año. Encuesta finalizada según protocolo.'); returnToConsent(); return; }
@@ -1067,12 +1106,7 @@ function nextSection() {
     }
   }
   if (!validateSection()) return;
-  if (currentSection < TOTAL_SECTIONS - 1) { 
-    currentSection++; 
-    renderSection(); 
-    scrollToTop();
-    autoSaveProgress(); // Guardar después de cambiar de sección
-  }
+  if (currentSection < TOTAL_SECTIONS - 1) { currentSection++; renderSection(); scrollToTop(); }
   else { finishSurvey(); }
 }
 
@@ -1083,7 +1117,6 @@ function returnToConsent() {
   } catch(e) { console.log('Error guardando respuesta parcial:', e); }
   answers = {}; currentSection = 0; editingId = null; surveyFinished = false; resetI1TimerGlobal();
   localStorage.removeItem('survey_progress');
-  sessionStorage.removeItem('survey_progress_backup');
   document.getElementById('main-app').classList.add('hidden');
   document.getElementById('complete-screen').classList.add('hidden');
   document.getElementById('admin-screen').classList.add('hidden');
@@ -1139,8 +1172,6 @@ function setAnswer(id, val) {
   if (id === 'B3') setTimeout(() => validateB3InRealTime(), 100);
   if (id === 'A6' || id === 'A8') checkSameSex();
   if (id === 'S0_dist') { setTimeout(() => updateA2Options(), 50); delete answers['A2']; renderSection(true); }
-  
-  autoSaveProgress();
 }
 
 function enforceMaxSelections(questionId, maxSelections) {
@@ -1176,7 +1207,6 @@ function selectI1(id, val, el) {
   if (radio) radio.checked = true;
   renderSection(true);
   if (i1AnswerSelected) resetI1Timer(); else { i1AnswerSelected = true; startI1Timer(); }
-  autoSaveProgress();
 }
 
 function startI1Timer() {
@@ -1238,7 +1268,6 @@ function selectRadio(id, val, el) {
   const conditionalParents = ['A3','A8','B4','B6','B7','B13_1_1','B13_2_1','B13_3_1','C3','M3','F5','F7_1','F7_2','F17','H1','H5','H14','H6_1','H7_1','H8_1','H9_1','H10_1','H11_1','H12_1','H13_1','H15_1','H16_1','H17_1','H18_1','H19_1','H20_1','I1_1','I1_2','I3','H15_3','H16_3','H17_3','H18_3','H19_3','H20_3'];
   if (conditionalParents.includes(id) && previousValue !== val) renderSection(true);
   if (id === 'A6' || id === 'A8') checkSameSex();
-  autoSaveProgress();
 }
 
 function toggleCheck(id, val, el) {
@@ -1269,16 +1298,9 @@ function toggleCheck(id, val, el) {
   if (id === 'F6') setTimeout(() => enforceMaxSelections('F6', 2), 50);
   if (id === 'F9') setTimeout(() => enforceMaxSelections('F9', 3), 50);
   if (id === 'F9' || id === 'D1') renderSection(true);
-  autoSaveProgress();
 }
 
-function setLikert(id, val, el) { 
-  answers[id]=val; 
-  let wrap=el.closest('.likert-wrap'); 
-  if(wrap) wrap.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected')); 
-  el.classList.add('selected');
-  autoSaveProgress();
-}
+function setLikert(id, val, el) { answers[id]=val; let wrap=el.closest('.likert-wrap'); if(wrap) wrap.querySelectorAll('.likert-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function addTooltipToQuestion(questionId, tooltipText) {
@@ -1467,13 +1489,11 @@ function obtenerUbicacion() {
           renderSection();
           clearTimeout(_ubicVerifTimerGPS);
           _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
-          autoSaveProgress();
         }).catch(err => {
           answers['ubicacion_direccion'] = `Lat: ${lat}, Lng: ${lng}`; answers['S0_ubic'] = `Lat: ${lat}, Lng: ${lng}`;
           renderSection();
           clearTimeout(_ubicVerifTimerGPS);
           _ubicVerifTimerGPS = setTimeout(() => verificarUbicacionDuplicada(), 600);
-          autoSaveProgress();
         });
       },
       function(error) {
@@ -1645,12 +1665,11 @@ function finishSurvey() {
   answers.id = editingId || Date.now().toString();
   saveRecord(answers);
   localStorage.removeItem('survey_progress');
-  sessionStorage.removeItem('survey_progress_backup');
   showComplete();
 }
 
 function showComplete() { document.getElementById('main-app').classList.add('hidden'); document.getElementById('complete-screen').classList.remove('hidden'); editingId = null; resetI1TimerGlobal(); }
-function newSurvey() { surveyFinished=false; answers={}; currentSection=0; resetI1TimerGlobal(); localStorage.removeItem('survey_progress'); sessionStorage.removeItem('survey_progress_backup'); document.getElementById('complete-screen').classList.add('hidden'); document.getElementById('consent-screen').classList.remove('hidden'); document.getElementById('main-app').classList.add('hidden'); }
+function newSurvey() { surveyFinished=false; answers={}; currentSection=0; resetI1TimerGlobal(); localStorage.removeItem('survey_progress'); document.getElementById('complete-screen').classList.add('hidden'); document.getElementById('consent-screen').classList.remove('hidden'); document.getElementById('main-app').classList.add('hidden'); }
 function getRecords() { try { return JSON.parse(localStorage.getItem('cap_records')||'[]'); } catch(e) { return []; } }
 function saveRecord(rec) { let records=getRecords(); let idx=records.findIndex(r=>r.id===rec.id); let recordToSave={...rec}; if(idx>=0) records[idx]=recordToSave; else records.push(recordToSave); localStorage.setItem('cap_records',JSON.stringify(records)); }
 function deleteRecord(id) { let records=getRecords().filter(r=>r.id!==id); localStorage.setItem('cap_records',JSON.stringify(records)); }
@@ -1752,7 +1771,6 @@ function switchTab(tab) {
   if (tab === 'survey') {
     resetI1TimerGlobal(); answers={}; currentSection=0; editingId=null; surveyFinished=false;
     localStorage.removeItem('survey_progress');
-    sessionStorage.removeItem('survey_progress_backup');
     document.getElementById('tab-survey').classList.add('active');
     document.getElementById('main-app').classList.remove('hidden');
     document.getElementById('admin-screen').classList.add('hidden');
